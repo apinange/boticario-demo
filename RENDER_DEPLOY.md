@@ -62,7 +62,7 @@ Após o deploy inicial, configure as variáveis de ambiente em cada serviço:
 No serviço `evolution-api`, adicione:
 
 1. **Conectar automaticamente** (use "Add from..."):
-   - `DATABASE_URL` → Selecione o serviço PostgreSQL criado
+   - `DATABASE_URL` → Selecione o serviço PostgreSQL criado (use a **Internal URL**)
    - `REDIS_URL` → Selecione o serviço Redis
 
 2. **Adicionar manualmente**:
@@ -70,8 +70,10 @@ No serviço `evolution-api`, adicione:
    NODE_ENV=production
    AUTHENTICATION_API_KEY=<sua_chave_secreta>
    SERVER_URL=https://evolution-api.onrender.com
+   DATABASE_CONNECTION_URI=<mesmo_valor_de_DATABASE_URL>
    ```
    - **Nota**: A URL `SERVER_URL` será a URL do próprio serviço Evolution API (você verá após o deploy, algo como `https://evolution-api.onrender.com`)
+   - **Importante**: `DATABASE_CONNECTION_URI` deve ter o mesmo valor de `DATABASE_URL` (use a **Internal URL** do PostgreSQL)
 
 #### 5.2. WhatsApp Integration (Serviço Principal)
 

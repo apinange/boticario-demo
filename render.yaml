@@ -51,9 +51,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false  # Set from PostgreSQL service
+        sync: false  # Set from PostgreSQL service (Internal URL)
       - key: DATABASE_CONNECTION_URI
-        fromEnvVar: DATABASE_URL  # Prisma schema expects DATABASE_CONNECTION_URI
+        sync: false  # Set to same value as DATABASE_URL (Prisma schema expects this name)
       - key: REDIS_URL
         fromService:
           name: whatsapp-redis
