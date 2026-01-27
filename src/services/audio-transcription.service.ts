@@ -91,14 +91,21 @@ export class AudioTranscriptionService {
       // Step 2: Create FormData for OpenAI Whisper API
       // Using FormData (like Evolution API does) instead of File API for better Node.js compatibility
       const formData = new FormData();
-      const filename = `audio_${Date.now()}.${audioMessage.mimetype?.includes('ogg') ? 'ogg' : 'mp3'}`;
-      formData.append('file', audioBuffer, filename);
+      // Use .ogg extension for OGG/Opus files, Whisper supports it
+      const filename = `audio_${Date.now()}.ogg`;
+      formData.append('file', audioBuffer, {
+        filename: filename,
+        contentType: 'audio/ogg'
+      });
       formData.append('model', 'whisper-1');
       formData.append('language', 'pt'); // Portuguese
       formData.append('response_format', 'text');
 
       // Step 3: Transcribe using OpenAI Whisper API directly via HTTP
       console.log(`[${timestamp}] 🎙️  Enviando áudio para OpenAI Whisper...`);
+      console.log(`[${timestamp}]    Audio buffer size: ${audioBuffer.length} bytes`);
+      console.log(`[${timestamp}]    Filename: ${filename}`);
+      
       const response = await axios.post(
         'https://api.openai.com/v1/audio/transcriptions',
         formData,
@@ -111,14 +118,32 @@ export class AudioTranscriptionService {
         }
       );
 
+      console.log(`[${timestamp}] 📥 Resposta da OpenAI recebida`);
+      console.log(`[${timestamp}]    Status: ${response.status}`);
+      console.log(`[${timestamp}]    Response data type: ${typeof response.data}`);
+      console.log(`[${timestamp}]    Response data:`, JSON.stringify(response.data, null, 2));
+
       // OpenAI returns text directly when response_format is 'text'
-      const transcriptionText = response?.data?.text || '';
+      // But sometimes it might be in response.data directly (string) or response.data.text
+      let transcriptionText = '';
+      
+      if (typeof response.data === 'string') {
+        transcriptionText = response.data;
+      } else if (response.data?.text) {
+        transcriptionText = response.data.text;
+      } else if (response.data) {
+        // Try to extract text from any field
+        transcriptionText = String(response.data);
+      }
+      
+      console.log(`[${timestamp}]    Transcription text extracted: "${transcriptionText}"`);
       
       if (transcriptionText.trim()) {
-        console.log(`[${timestamp}] ✅ Transcrição concluída: "${transcriptionText}"`);
+        console.log(`[${timestamp}] ✅ Transcrição concluída: "${transcriptionText.trim()}"`);
         return transcriptionText.trim();
       } else {
         console.warn(`[${timestamp}] ⚠️  Transcrição vazia`);
+        console.warn(`[${timestamp}]    Response data completo:`, JSON.stringify(response.data));
         return null;
       }
     } catch (error: any) {
