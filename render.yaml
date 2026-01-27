@@ -59,6 +59,21 @@ services:
           name: whatsapp-redis
           type: redis
           property: connectionString
+      - key: CACHE_REDIS_ENABLED
+        value: "true"
+      - key: CACHE_REDIS_URI
+        fromService:
+          name: whatsapp-redis
+          type: redis
+          property: connectionString
+      - key: CACHE_REDIS_PREFIX_KEY
+        value: "evolution-cache"
+      - key: CACHE_REDIS_TTL
+        value: "604800"
+      - key: CACHE_REDIS_SAVE_INSTANCES
+        value: "true"
+      - key: CACHE_LOCAL_ENABLED
+        value: "true"
       - key: AUTHENTICATION_API_KEY
         sync: false  # Set in Render dashboard
       - key: SERVER_URL

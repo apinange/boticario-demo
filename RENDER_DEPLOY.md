@@ -64,6 +64,7 @@ No serviço `evolution-api`, adicione:
 1. **Conectar automaticamente** (use "Add from..."):
    - `DATABASE_URL` → Selecione o serviço PostgreSQL criado (use a **Internal URL**)
    - `REDIS_URL` → Selecione o serviço Redis
+   - `CACHE_REDIS_URI` → Selecione o serviço Redis (mesmo que REDIS_URL)
 
 2. **Adicionar manualmente**:
    ```
@@ -71,6 +72,11 @@ No serviço `evolution-api`, adicione:
    AUTHENTICATION_API_KEY=<sua_chave_secreta>
    SERVER_URL=https://evolution-api.onrender.com
    DATABASE_CONNECTION_URI=<mesmo_valor_de_DATABASE_URL>
+   CACHE_REDIS_ENABLED=true
+   CACHE_REDIS_PREFIX_KEY=evolution-cache
+   CACHE_REDIS_TTL=604800
+   CACHE_REDIS_SAVE_INSTANCES=true
+   CACHE_LOCAL_ENABLED=true
    ```
    - **Nota**: A URL `SERVER_URL` será a URL do próprio serviço Evolution API (você verá após o deploy, algo como `https://evolution-api.onrender.com`)
    - **Importante**: `DATABASE_CONNECTION_URI` deve ter o mesmo valor de `DATABASE_URL` (use a **Internal URL** do PostgreSQL)
