@@ -4,7 +4,8 @@ services:
     name: whatsapp-integration
     env: node
     plan: free
-    buildCommand: npm install
+    nodeVersion: 20
+    buildCommand: npm ci
     startCommand: npm run webhook
     envVars:
       - key: NODE_ENV
@@ -44,8 +45,9 @@ services:
     name: evolution-api
     env: node
     plan: free
+    nodeVersion: 20
     rootDir: evolution-api
-    buildCommand: npm install && npm run build && npm run db:deploy
+    buildCommand: npm ci && npm run build && npm run db:deploy
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
