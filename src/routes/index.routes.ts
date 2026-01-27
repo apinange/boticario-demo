@@ -6,7 +6,8 @@ import { getStatus } from '../controllers/status.controller';
 import { 
   getInstances, 
   createInstance, 
-  getQrCode, 
+  getQrCode,
+  getQrCodeImage, 
   reconnectInstance, 
   logoutInstance 
 } from '../controllers/instance.controller';
@@ -77,6 +78,7 @@ router.post('/api/instances', createInstance);
  *         description: QR code data
  */
 router.get('/api/instances/qr', getQrCode);
+router.get('/api/instances/qr/image', getQrCodeImage);
 
 /**
  * @swagger

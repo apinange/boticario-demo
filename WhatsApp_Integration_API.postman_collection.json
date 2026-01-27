@@ -100,21 +100,18 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/instances/qr?instanceName=default&format=image",
+							"raw": "{{base_url}}/api/instances/qr/image?instanceName=default",
 							"host": ["{{base_url}}"],
-							"path": ["api", "instances", "qr"],
+							"path": ["api", "instances", "qr", "image"],
 							"query": [
 								{
 									"key": "instanceName",
-									"value": "default"
-								},
-								{
-									"key": "format",
-									"value": "image",
-									"description": "Returns PNG image directly - Postman will display it automatically"
+									"value": "default",
+									"description": "Name of the instance (optional, uses default if not provided)"
 								}
 							]
-						}
+						},
+						"description": "Returns QR code as PNG image directly. Postman will automatically display the image in the Preview tab."
 					}
 				},
 				{

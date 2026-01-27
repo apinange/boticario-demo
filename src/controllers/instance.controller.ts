@@ -110,6 +110,57 @@ export const createInstance = async (req: Request, res: Response) => {
  *       500:
  *         description: Server error
  */
+export const getQrCodeImage = async (req: Request, res: Response) => {
+  try {
+    const { instanceName } = req.query;
+    const name = (instanceName as string) || undefined;
+    
+    // First, check if instance exists, if not, create it
+    try {
+      const instances = await instanceService.fetchInstances();
+      const instanceExists = instances.some((inst: any) => 
+        inst.instance?.instanceName === name || 
+        inst.instanceName === name ||
+        (!name && (inst.instance?.instanceName === 'default' || inst.instanceName === 'default'))
+      );
+      
+      if (!instanceExists) {
+        console.log(`[${new Date().toISOString()}] ℹ️  Instance "${name || 'default'}" not found, creating it...`);
+        await instanceService.createInstance(name);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (createError: any) {
+      if (!createError.message.includes('already exists')) {
+        console.error(`[${new Date().toISOString()}] ⚠️  Error checking/creating instance:`, createError.message);
+      }
+    }
+    
+    // Get QR code
+    const qrData = await instanceService.getQrCode(name);
+    
+    if (qrData) {
+      try {
+        // Use qrCode (raw base64) or extract from base64 data URL
+        const base64Data = qrData.qrCode || qrData.base64.replace(/^data:image\/png;base64,/, '');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.send(imageBuffer);
+      } catch (bufferError: any) {
+        console.error(`[${new Date().toISOString()}] ❌ Error converting base64 to image:`, bufferError.message);
+        return res.status(500).json({ error: 'Failed to convert QR code to image' });
+      }
+    } else {
+      res.status(404).json({ error: 'QR code not available yet. Please try again in a few seconds.' });
+    }
+  } catch (error: any) {
+    console.error(`[${new Date().toISOString()}] ❌ Error getting QR code image:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const getQrCode = async (req: Request, res: Response) => {
   try {
     const { instanceName, format } = req.query;
@@ -143,18 +194,25 @@ export const getQrCode = async (req: Request, res: Response) => {
     
     if (qrData) {
       // If format=image, return the image directly
-      if (returnImage && qrData.base64) {
-        // Remove data URL prefix if present
-        const base64Data = qrData.base64.replace(/^data:image\/png;base64,/, '');
-        const imageBuffer = Buffer.from(base64Data, 'base64');
-        
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
-        return res.send(imageBuffer);
+      if (returnImage) {
+        try {
+          // Use qrCode (raw base64) or extract from base64 data URL
+          const base64Data = qrData.qrCode || qrData.base64.replace(/^data:image\/png;base64,/, '');
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
+          res.setHeader('Cache-Control', 'no-cache');
+          return res.send(imageBuffer);
+        } catch (bufferError: any) {
+          console.error(`[${new Date().toISOString()}] ❌ Error converting base64 to image:`, bufferError.message);
+          // Fallback to JSON if image conversion fails
+          res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
+        }
+      } else {
+        // Return JSON
+        res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
       }
-      
-      // Otherwise return JSON
-      res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
     } else {
       res.status(404).json({ error: 'QR code not available yet. Please try again in a few seconds.' });
     }
