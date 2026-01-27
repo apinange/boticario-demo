@@ -62,3 +62,4 @@ services:
     name: whatsapp-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # Empty array allows all IPs (for internal Render services)
