@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "WhatsApp Integration using Evolution API",
   "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0 <21.0.0"
+  },
   "scripts": {
     "send": "tsx src/commands/send-message.ts",
     "check": "tsx src/commands/check-instance.ts",
