@@ -126,13 +126,28 @@ whatsapp_integrations/
 
 ## 🔗 Endpoints
 
+### Principais
 - **Webhook**: `POST /webhook` - Recebe eventos da Evolution API
 - **Health**: `GET /health` - Health check
 - **Status**: `GET /status` - Status do sistema
 - **Agent Message**: `POST /agent/message` - Envia mensagem do agente
 
+### API REST (Todos os comandos CLI disponíveis como endpoints)
+- **Instances**: `GET /api/instances`, `POST /api/instances`, `GET /api/instances/qr`, etc.
+- **Messages**: `POST /api/messages`, `POST /api/messages/ocp`
+- **Bot Mode**: `GET /api/bot-mode`, `POST /api/bot-mode`
+- **Agent Mode**: `GET /api/agent-mode`, `POST /api/agent-mode/enable`, etc.
+- **OCP**: `POST /api/ocp/restart`, `POST /api/ocp/start-conversation`
+- **Webhook Config**: `POST /api/webhook/setup`
+
+### Documentação Interativa
+- **Swagger UI**: `http://localhost:3000/api-docs` - Documentação completa da API
+
+Veja [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) para detalhes completos.
+
 ## 📖 Documentação
 
+- [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) - Documentação completa da API REST
 - [RENDER_DEPLOY.md](./RENDER_DEPLOY.md) - Guia de deploy no Render
 - [DEPLOY_QUICK_START.md](./DEPLOY_QUICK_START.md) - Checklist rápido de deploy
 - [STRUCTURE.md](./STRUCTURE.md) - Estrutura detalhada do projeto
