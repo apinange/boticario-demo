@@ -73,6 +73,10 @@ OCP_API_KEY=<sua_chave_ocp>
 # Opcional
 OPENAI_API_KEY=<sua_chave_openai>
 LOGGING_ENDPOINT_URL=<url_do_logging>
+
+# Evolution API Logs (reduzir verbosidade)
+LOG_LEVEL=ERROR,WARN  # Apenas erros e avisos
+LOG_BAILEYS=error  # Logs do Baileys apenas para erros
 ```
 
 ### 5. URLs Após Deploy

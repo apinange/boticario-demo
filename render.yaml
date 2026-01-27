@@ -78,6 +78,10 @@ services:
         sync: false  # Set in Render dashboard
       - key: SERVER_URL
         sync: false  # Will be auto-set to service URL
+      - key: LOG_LEVEL
+        value: ERROR,WARN
+      - key: LOG_BAILEYS
+        value: error
 
   # Redis
   - type: redis
