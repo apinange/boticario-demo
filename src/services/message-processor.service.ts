@@ -54,15 +54,30 @@ export class MessageProcessorService {
         }
       });
       
-      // Filter out status updates (DELIVERY_ACK, READ, etc.) - these are not actual messages
+      // Filter out status updates (DELIVERY_ACK, READ, etc.) - but only if they don't have message content
+      // If a message has content (text, audio, image, etc.), process it even if it has a status
       let messages = messageData.filter((msg: any) => {
         const status = msg.status;
-        // Only process messages without status or with status that indicates a new message
-        // DELIVERY_ACK, READ, etc. are status updates, not new messages
-        if (status && status !== 'PENDING' && status !== 'SENT') {
-          console.log(`[${timestamp}]    ⏭️  Ignorando atualização de status: ${status}`);
+        const hasContent = !!(
+          msg.message?.conversation ||
+          msg.message?.extendedTextMessage ||
+          msg.message?.audioMessage ||
+          msg.message?.imageMessage ||
+          msg.message?.videoMessage ||
+          msg.message?.documentMessage
+        );
+        
+        // If message has content, always process it (even with status)
+        if (hasContent) {
+          return true;
+        }
+        
+        // If no content and has status like DELIVERY_ACK, READ, etc., it's just a status update
+        if (status && status !== 'PENDING' && status !== 'SENT' && !hasContent) {
+          console.log(`[${timestamp}]    ⏭️  Ignorando atualização de status sem conteúdo: ${status}`);
           return false;
         }
+        
         return true;
       });
       console.log(`[${timestamp}]    After status filter: ${messages.length} message(s)`);
