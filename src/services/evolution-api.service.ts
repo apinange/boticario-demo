@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/env.config';
+import { instanceService } from './instance.service';
 
 export class EvolutionApiService {
   private readonly baseUrl: string;
@@ -14,6 +15,34 @@ export class EvolutionApiService {
 
   async sendTextMessage(phoneNumber: string, text: string): Promise<string | null> {
     const timestamp = new Date().toISOString();
+    
+    // Verify instance exists before sending
+    try {
+      const instances = await instanceService.fetchInstances();
+      const instanceExists = instances.some(
+        (inst: any) => {
+          const instanceName = inst.name || 
+                              inst.instanceName || 
+                              inst.instance?.instanceName || 
+                              inst.instance?.name;
+          return instanceName === this.instanceName;
+        }
+      );
+      
+      if (!instanceExists) {
+        const errorMsg = `Instance "${this.instanceName}" does not exist. Please create it first using POST /api/instances or GET /api/instances/qr`;
+        console.error(`[${timestamp}] ❌ ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
+    } catch (checkError: any) {
+      // If it's our custom error, throw it
+      if (checkError.message.includes('does not exist')) {
+        throw checkError;
+      }
+      // Otherwise, log warning but continue (check might fail for other reasons)
+      console.warn(`[${timestamp}] ⚠️  Não foi possível verificar a instância (continuando mesmo assim):`, checkError.message);
+    }
+    
     try {
       const formattedNumber = phoneNumber.replace(/[+\s-]/g, '');
       
@@ -46,8 +75,31 @@ export class EvolutionApiService {
       
       if (axios.isAxiosError(error) && error.response) {
         const errorData = error.response.data;
-        const errorMessage = errorData?.response?.message || errorData?.message || `HTTP ${error.response.status}`;
+        let errorMessage: string;
+        
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData?.response?.message) {
+          const msg = errorData.response.message;
+          if (Array.isArray(msg)) {
+            errorMessage = msg.map((m: any) => typeof m === 'string' ? m : JSON.stringify(m)).join(', ');
+          } else {
+            errorMessage = String(msg);
+          }
+        } else if (errorData?.message) {
+          errorMessage = Array.isArray(errorData.message) 
+            ? errorData.message.join(', ') 
+            : String(errorData.message);
+        } else {
+          errorMessage = `HTTP ${error.response.status}`;
+        }
+        
         console.error(`[${errorTimestamp}]    Error: ${errorMessage}`);
+        
+        // If instance doesn't exist, provide helpful message
+        if (error.response.status === 404 && errorMessage.includes('does not exist')) {
+          console.error(`[${errorTimestamp}] 💡 Dica: Crie a instância usando: GET /api/instances/qr?instanceName=${this.instanceName}`);
+        }
       }
       
       throw error;
