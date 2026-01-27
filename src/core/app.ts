@@ -5,6 +5,7 @@ import { config } from '../config/env.config';
 import { getOCPClient } from './ocp-websocket';
 import { swaggerSpec } from '../config/swagger.config';
 import routes from '../routes/index.routes';
+import { webhookConfigService } from '../services/webhook-config.service';
 
 const app = express();
 
@@ -44,6 +45,23 @@ function initializeOCP() {
   }
 }
 
+// Auto-configure webhook on startup
+async function autoSetupWebhook() {
+  const timestamp = new Date().toISOString();
+  
+  console.log(`[${timestamp}] 🔧 Auto-configurando webhook...`);
+  console.log(`[${timestamp}]    Instance: ${config.instanceName}`);
+  
+  try {
+    await webhookConfigService.autoSetupWebhook(config.instanceName);
+    console.log(`[${timestamp}] ✅ Webhook configurado automaticamente com sucesso!\n`);
+  } catch (error: any) {
+    // Don't fail startup if webhook setup fails - already logged in autoSetupWebhook
+    console.warn(`[${timestamp}] ⚠️  Não foi possível configurar webhook automaticamente.`);
+    console.warn(`[${timestamp}]    Você pode configurar manualmente usando: POST /api/webhook/setup\n`);
+  }
+}
+
 export function startServer() {
   const timestamp = new Date().toISOString();
   
@@ -72,6 +90,13 @@ export function startServer() {
     
     // Initialize OCP client
     initializeOCP();
+    
+    // Auto-configure webhook (non-blocking)
+    setTimeout(() => {
+      autoSetupWebhook().catch((error) => {
+        console.error(`[${new Date().toISOString()}] ❌ Error in auto webhook setup:`, error.message);
+      });
+    }, 2000); // Wait 2 seconds for server to be fully ready
   });
 }
 

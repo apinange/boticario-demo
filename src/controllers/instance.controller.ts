@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { instanceService } from '../services/instance.service';
+import { webhookConfigService } from '../services/webhook-config.service';
 
 /**
  * @swagger
@@ -64,6 +65,14 @@ export const createInstance = async (req: Request, res: Response) => {
   try {
     const { instanceName } = req.body;
     const result = await instanceService.createInstance(instanceName);
+    
+    // Auto-setup webhook after instance creation (non-blocking)
+    setTimeout(() => {
+      webhookConfigService.autoSetupWebhook(instanceName, req).catch(() => {
+        // Silently fail - already logged in autoSetupWebhook
+      });
+    }, 1000);
+    
     res.json({ success: true, data: result });
   } catch (error: any) {
     if (error.message.includes('already exists')) {
@@ -286,7 +295,14 @@ export const getQrCode = async (req: Request, res: Response) => {
       }
     }
     
-    // Step 3: Get QR code
+    // Step 3: Auto-setup webhook (non-blocking)
+    setTimeout(() => {
+      webhookConfigService.autoSetupWebhook(name, req).catch(() => {
+        // Silently fail - already logged in autoSetupWebhook
+      });
+    }, 1000);
+    
+    // Step 4: Get QR code
     console.log(`[${new Date().toISOString()}] 📱 Getting QR code for instance "${name}"...`);
     const qrData = await instanceService.getQrCode(name);
     

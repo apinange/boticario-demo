@@ -13,6 +13,45 @@ export class WebhookConfigService {
     this.instanceName = config.instanceName;
   }
 
+  /**
+   * Get the webhook URL based on environment or construct from request
+   */
+  private getWebhookUrl(req?: any): string {
+    // Try environment variable first (for Render/production)
+    const envWebhookUrl = process.env.WEBHOOK_SERVER_URL || process.env.WHATSAPP_INTEGRATION_URL;
+    if (envWebhookUrl && !envWebhookUrl.includes('localhost')) {
+      return `${envWebhookUrl.replace(/\/$/, '')}/webhook`;
+    }
+    
+    // Try to get from request (for dynamic detection)
+    if (req) {
+      const protocol = req.protocol || (req.secure ? 'https' : 'http');
+      const host = req.get('host') || req.hostname;
+      if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+        return `${protocol}://${host}/webhook`;
+      }
+    }
+    
+    // Fallback to localhost (for development)
+    return `http://localhost:${config.port}/webhook`;
+  }
+
+  /**
+   * Auto-setup webhook (used internally)
+   */
+  async autoSetupWebhook(instanceName?: string, req?: any): Promise<void> {
+    const name = instanceName || this.instanceName;
+    const webhookUrl = this.getWebhookUrl(req);
+    
+    try {
+      await this.setupWebhook(webhookUrl, name);
+    } catch (error: any) {
+      // Silently fail - don't throw, just log
+      const timestamp = new Date().toISOString();
+      console.warn(`[${timestamp}] ⚠️  Auto webhook setup failed (non-critical):`, error.message);
+    }
+  }
+
   async setupWebhook(webhookUrl: string, instanceName?: string): Promise<any> {
     const name = instanceName || this.instanceName;
     const timestamp = new Date().toISOString();
