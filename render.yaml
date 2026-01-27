@@ -4,8 +4,8 @@ services:
     name: whatsapp-integration
     env: node
     plan: free
-    buildCommand: npm ci
-    startCommand: npm run webhook
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
