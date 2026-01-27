@@ -56,6 +56,35 @@ export class WebhookConfigService {
       throw error;
     }
   }
+
+  async getWebhook(instanceName?: string): Promise<any> {
+    const name = instanceName || this.instanceName;
+    
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/webhook/find/${name}`,
+        {
+          headers: {
+            apikey: this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          return null; // Webhook not configured
+        }
+        if (error.code === 'ECONNREFUSED') {
+          throw new Error(`Cannot connect to Evolution API at ${this.baseUrl}`);
+        }
+      }
+      throw error;
+    }
+  }
 }
 
 export const webhookConfigService = new WebhookConfigService();
