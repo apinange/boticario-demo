@@ -4,6 +4,45 @@ import { getMessageLogger } from '../core/message-logger';
 import { evolutionApiService } from '../services/evolution-api.service';
 import { config } from '../config/env.config';
 
+/**
+ * @swagger
+ * /agent/message:
+ *   post:
+ *     summary: Send message from agent to WhatsApp
+ *     description: Allows a human agent to send a message to the user via WhatsApp. The phone number is automatically set to the configured default number.
+ *     tags: [Agent]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - text
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: Message text to send
+ *                 example: "Olá! Como posso ajudar?"
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 messageId:
+ *                   type: string
+ *       400:
+ *         description: Bad request - missing text or agent mode not active
+ *       500:
+ *         description: Server error
+ *       503:
+ *         description: Evolution API not accessible
+ */
 export const sendAgentMessage = async (req: Request, res: Response) => {
   try {
     const timestamp = new Date().toISOString();

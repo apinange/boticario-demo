@@ -1,7 +1,9 @@
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 import { corsConfig } from '../config/cors.config';
 import { config } from '../config/env.config';
 import { getOCPClient } from './ocp-websocket';
+import { swaggerSpec } from '../config/swagger.config';
 import routes from '../routes/index.routes';
 
 const app = express();
@@ -10,6 +12,12 @@ const app = express();
 app.use(corsConfig);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'WhatsApp Integration API Documentation'
+}));
 
 // Routes
 app.use('/', routes);
@@ -44,6 +52,7 @@ export function startServer() {
     console.log(`[${timestamp}]    URL: http://localhost:${config.port}`);
     console.log(`[${timestamp}]    Webhook endpoint: http://localhost:${config.port}/webhook`);
     console.log(`[${timestamp}]    Health check: http://localhost:${config.port}/health`);
+    console.log(`[${timestamp}]    API Documentation: http://localhost:${config.port}/api-docs`);
     
     // Check OpenAI API Key for audio transcription
     if (!config.openaiApiKey) {

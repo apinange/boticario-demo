@@ -3,6 +3,39 @@ import WebSocket from 'ws';
 import { getOCPClient } from '../core/ocp-websocket';
 import { config } from '../config/env.config';
 
+/**
+ * @swagger
+ * /status:
+ *   get:
+ *     summary: Get system status
+ *     description: Returns the current status of the system including OCP WebSocket connection
+ *     tags: [Status]
+ *     responses:
+ *       200:
+ *         description: System status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 ocp:
+ *                   type: object
+ *                   properties:
+ *                     connected:
+ *                       type: boolean
+ *                     url:
+ *                       type: string
+ *                     readyState:
+ *                       type: number
+ *                     sessionId:
+ *                       type: string
+ *                       nullable: true
+ *       500:
+ *         description: Server error
+ */
 export const getStatus = (req: Request, res: Response) => {
   try {
     const ocpClient = getOCPClient();
