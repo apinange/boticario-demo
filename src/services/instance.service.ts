@@ -25,7 +25,15 @@ export class InstanceService {
       );
 
       if (response.status === 200) {
-        return Array.isArray(response.data) ? response.data : [];
+        // Handle different response formats
+        if (Array.isArray(response.data)) {
+          return response.data;
+        }
+        // If response has 'instances' property (from our controller wrapper)
+        if (response.data?.instances && Array.isArray(response.data.instances)) {
+          return response.data.instances;
+        }
+        return [];
       }
       
       return [];
@@ -309,7 +317,10 @@ export class InstanceService {
       
       // Delete all instances sequentially to avoid conflicts
       for (const inst of instances) {
-        const instanceName = inst.instance?.instanceName || inst.instanceName;
+        const instanceName = inst.name || 
+                            inst.instanceName || 
+                            inst.instance?.instanceName || 
+                            inst.instance?.name;
         if (instanceName) {
           try {
             // First, try to logout the instance
@@ -343,7 +354,10 @@ export class InstanceService {
         console.warn(`[${new Date().toISOString()}] ⚠️  Warning: ${remainingInstances.length} instance(s) still exist after deletion attempt`);
         // Try one more time to delete remaining instances
         for (const inst of remainingInstances) {
-          const instanceName = inst.instance?.instanceName || inst.instanceName;
+          const instanceName = inst.name || 
+                              inst.instanceName || 
+                              inst.instance?.instanceName || 
+                              inst.instance?.name;
           if (instanceName) {
             try {
               await this.deleteInstance(instanceName);

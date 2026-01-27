@@ -26,7 +26,14 @@ export class WebhookConfigService {
       console.log(`[${timestamp}] 🔍 Verificando se a instância "${name}" existe...`);
       const instances = await instanceService.fetchInstances();
       const instanceExists = instances.some(
-        (inst: any) => (inst.instance?.instanceName || inst.instanceName) === name
+        (inst: any) => {
+          // Try multiple possible field names
+          const instanceName = inst.name || 
+                              inst.instanceName || 
+                              inst.instance?.instanceName || 
+                              inst.instance?.name;
+          return instanceName === name;
+        }
       );
       
       if (!instanceExists) {
