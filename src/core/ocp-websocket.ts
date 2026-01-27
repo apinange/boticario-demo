@@ -8,6 +8,7 @@ import { getMessageLogger } from './message-logger';
 import { getBotMode, isReactiveMode } from '../features/bot-mode';
 import { botMessageTracker } from '../utils/bot-message-tracker';
 import { setAgentMode, isInAgentMode } from '../features/agent-mode';
+import { evolutionApiService } from '../services/evolution-api.service';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -907,27 +908,16 @@ class OCPWebSocketClient {
       console.log(`[${timestamp}]    Phone: ${formattedNumber}`);
       console.log(`[${timestamp}]    Image size: ${(imageBuffer.length / 1024).toFixed(2)} KB`);
       
-      // Send image via Evolution API
-      const response = await axios.post(
-        `${EVOLUTION_API_URL}/message/sendMedia/${INSTANCE_NAME}`,
-        {
-          number: formattedNumber,
-          mediatype: 'image',
-          media: imageBase64,
-          fileName: 'catalog.png',
-          caption: ''
-        },
-        {
-          headers: {
-            apikey: EVOLUTION_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          timeout: 60000
-        }
+      // Send image via Evolution API service (includes instance verification)
+      const messageId = await evolutionApiService.sendMedia(
+        formattedNumber,
+        'image',
+        imageBase64,
+        'catalog.png',
+        ''
       );
       
-      if (response.status === 200 || response.status === 201) {
-        const messageId = response.data?.key?.id || 'N/A';
+      if (messageId) {
         console.log(`[${timestamp}] ✅ Catálogo enviado com sucesso!`);
         console.log(`[${timestamp}]    Message ID: ${messageId}`);
         
@@ -937,7 +927,7 @@ class OCPWebSocketClient {
           phoneNumber: phoneNumber,
           text: '', // Catalog has no text, only image
           imagePath: imagePath,
-          messageId: messageId !== 'N/A' ? messageId : undefined
+          messageId: messageId
         });
       }
     } catch (error: any) {
@@ -978,106 +968,44 @@ class OCPWebSocketClient {
       
       const timestamp = new Date().toISOString();
       console.log(`[${timestamp}] 📤 Tentando enviar para Evolution API...`);
-      console.log(`[${timestamp}]    URL: ${EVOLUTION_API_URL}/message/sendText/${INSTANCE_NAME}`);
       console.log(`[${timestamp}]    Number: ${formattedNumber}`);
       console.log(`[${timestamp}]    Text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
       
-      // Retry logic: try up to 3 times with shorter timeout
-      let lastError: any = null;
-      const maxRetries = 3;
-      const timeoutMs = 30000; // 30 seconds per attempt
-      
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          if (attempt > 1) {
-            const retryTimestamp = new Date().toISOString();
-            console.log(`[${retryTimestamp}] 🔄 Tentativa ${attempt}/${maxRetries} de enviar mensagem...`);
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
-          }
+      try {
+        // Use evolutionApiService which includes instance verification
+        const messageId = await evolutionApiService.sendTextMessage(formattedNumber, text);
+        
+        if (messageId) {
+          const successTimestamp = new Date().toISOString();
+          console.log(`[${successTimestamp}] ✅ OCP → WhatsApp: Message sent successfully`);
+          console.log(`[${successTimestamp}]    Phone: ${formattedNumber}`);
+          console.log(`[${successTimestamp}]    Message ID: ${messageId}`);
           
-          const response = await axios.post(
-            `${EVOLUTION_API_URL}/message/sendText/${INSTANCE_NAME}`,
-            {
-              number: formattedNumber,
-              text: text
-            },
-            {
-              headers: {
-                apikey: EVOLUTION_API_KEY,
-                'Content-Type': 'application/json'
-              },
-              timeout: timeoutMs
-            }
-          );
-
-          if (response.status === 200 || response.status === 201) {
-            const successTimestamp = new Date().toISOString();
-            const messageId = response.data?.key?.id || 'N/A';
-            console.log(`[${successTimestamp}] ✅ OCP → WhatsApp: Message sent successfully`);
-            console.log(`[${successTimestamp}]    Phone: ${formattedNumber}`);
-            console.log(`[${successTimestamp}]    Message ID: ${messageId}`);
-            
-            // Log BOT message
-            const logger = getMessageLogger();
-            await logger.logBotMessage({
-              phoneNumber: phoneNumber,
-              text: text,
-              messageId: messageId !== 'N/A' ? messageId : undefined
-            });
-            
-            return; // Success, exit function
-          }
-        } catch (error: any) {
-          lastError = error;
-          const errorTimestamp = new Date().toISOString();
-          
-          if (axios.isAxiosError(error)) {
-            if (error.response) {
-              const errorData = error.response.data;
-              const errorMessage = errorData?.response?.message || errorData?.message || `HTTP ${error.response.status}`;
-              console.error(`[${errorTimestamp}] ❌ Erro ao enviar para WhatsApp (tentativa ${attempt}/${maxRetries}): ${errorMessage}`);
-              
-              // Don't retry on 4xx errors (client errors)
-              if (error.response.status >= 400 && error.response.status < 500) {
-                console.error(`[${errorTimestamp}] ⚠️  Erro do cliente (4xx), não tentando novamente`);
-                
-                // If it's a 400 error, likely invalid phone number - clean up session mapping
-                if (error.response.status === 400) {
-                  this.cleanupInvalidMappings(formattedNumber);
-                }
-                
-                break;
-              }
-            } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-              console.error(`[${errorTimestamp}] ⏱️  Timeout ao enviar para WhatsApp (tentativa ${attempt}/${maxRetries})`);
-              if (attempt < maxRetries) {
-                console.log(`[${errorTimestamp}] 🔄 Tentando novamente em ${attempt} segundo(s)...`);
-              }
-            } else if (error.code === 'ECONNREFUSED') {
-              console.error(`[${errorTimestamp}] ❌ Não foi possível conectar à Evolution API`);
-              console.error(`[${errorTimestamp}]    URL: ${EVOLUTION_API_URL}`);
-              console.error(`[${errorTimestamp}]    Verifique se a Evolution API está rodando`);
-              if (attempt < maxRetries) {
-                console.log(`[${errorTimestamp}] 🔄 Tentando novamente em ${attempt} segundo(s)...`);
-              }
-            } else {
-              console.error(`[${errorTimestamp}] ❌ Erro de rede (tentativa ${attempt}/${maxRetries}): ${error.message}`);
-              if (attempt < maxRetries) {
-                console.log(`[${errorTimestamp}] 🔄 Tentando novamente em ${attempt} segundo(s)...`);
-              }
-            }
-          } else {
-            console.error(`[${errorTimestamp}] ❌ Erro desconhecido (tentativa ${attempt}/${maxRetries}): ${error.message}`);
-          }
+          // Log BOT message
+          const logger = getMessageLogger();
+          await logger.logBotMessage({
+            phoneNumber: phoneNumber,
+            text: text,
+            messageId: messageId
+          });
         }
+      } catch (error: any) {
+        const errorTimestamp = new Date().toISOString();
+        console.error(`[${errorTimestamp}] ❌ Erro ao enviar para WhatsApp:`, error.message);
+        
+        // If it's a 400 error, likely invalid phone number - clean up session mapping
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          this.cleanupInvalidMappings(formattedNumber);
+        }
+        
+        // If it's a 404 error (instance not found), log helpful message
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          console.error(`[${errorTimestamp}] 💡 Dica: Verifique se a instância existe e está conectada usando: GET /api/instances`);
+        }
+        
+        // Re-throw to let caller handle it
+        throw error;
       }
-      
-      // If we get here, all retries failed
-      const finalErrorTimestamp = new Date().toISOString();
-      console.error(`[${finalErrorTimestamp}] ❌ FALHA AO ENVIAR MENSAGEM APÓS ${maxRetries} TENTATIVAS`);
-      console.error(`[${finalErrorTimestamp}]    Phone: ${formattedNumber}`);
-      console.error(`[${finalErrorTimestamp}]    Message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
-      console.error(`[${finalErrorTimestamp}]    Último erro: ${lastError?.message || 'Unknown error'}`);
       
       // Don't throw - just log the error so other messages can still be processed
     } catch (error: any) {
