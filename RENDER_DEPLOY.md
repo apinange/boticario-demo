@@ -109,6 +109,10 @@ No serviço `whatsapp-integration`, adicione:
    # Optional
    OPENAI_API_KEY=<sua_chave_openai>  # Opcional - para transcrição de áudio
    LOGGING_ENDPOINT_URL=<url_do_endpoint_de_logging>
+   
+   # Evolution API Logs (reduzir verbosidade)
+   LOG_LEVEL=ERROR,WARN  # Apenas erros e avisos (padrão: todos os níveis)
+   LOG_BAILEYS=error  # Logs do Baileys apenas para erros
    ```
 
    **Importante**: 
