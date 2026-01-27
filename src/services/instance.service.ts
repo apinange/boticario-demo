@@ -46,8 +46,7 @@ export class InstanceService {
         {
           instanceName: name,
           token: name,
-          integration: 'WHATSAPP-BAILEYS',
-          qrcode: true
+          Integration: 'WHATSAPP-BAILEYS'
         },
         {
           headers: {
