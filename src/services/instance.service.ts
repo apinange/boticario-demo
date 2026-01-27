@@ -67,9 +67,27 @@ export class InstanceService {
         if (error.response?.status === 409) {
           throw new Error(`Instance "${name}" already exists`);
         }
+        if (error.response?.status === 400) {
+          const errorMessage = error.response?.data?.response?.message || 
+                              error.response?.data?.message || 
+                              JSON.stringify(error.response?.data) ||
+                              error.message;
+          console.error(`[${new Date().toISOString()}] ❌ Error creating instance (400):`, {
+            status: error.response.status,
+            data: error.response.data,
+            message: errorMessage
+          });
+          throw new Error(`Bad request: ${errorMessage}`);
+        }
         if (error.code === 'ECONNREFUSED') {
           throw new Error(`Cannot connect to Evolution API at ${this.baseUrl}`);
         }
+        // Log full error for debugging
+        console.error(`[${new Date().toISOString()}] ❌ Error creating instance:`, {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
       }
       throw error;
     }
