@@ -105,7 +105,7 @@ export class WebhookConfigService {
               'MESSAGES_SET',
               'MESSAGES_UPDATE',
               'CONNECTION_UPDATE',
-              'QRCODE_UPDATE'
+              'QRCODE_UPDATED'
             ]
           }
         },
