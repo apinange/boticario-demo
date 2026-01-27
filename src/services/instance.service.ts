@@ -46,7 +46,7 @@ export class InstanceService {
         {
           instanceName: name,
           token: name,
-          Integration: 'WHATSAPP-BAILEYS'
+          integration: 'WHATSAPP-BAILEYS'
         },
         {
           headers: {
