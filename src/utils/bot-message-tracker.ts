@@ -1,6 +1,6 @@
 /**
  * Tracks bot messages and image counts per phone number
- * Used to detect when user should send "yes" after sending 3 images
+ * Used to detect when user should send "sim" after sending 3 images
  */
 
 interface ImageTracking {
@@ -53,7 +53,7 @@ class BotMessageTracker {
 
   /**
    * Record that user sent image(s)
-   * Returns true if we should send "yes" to OCP (3+ images received)
+   * Returns true if we should send "sim" to OCP (3+ images received)
    */
   public recordImage(phoneNumber: string, imageCount: number = 1): boolean {
     const tracking = this.imageTracking.get(phoneNumber);
@@ -77,7 +77,7 @@ class BotMessageTracker {
 
     // Check if we reached the required count
     if (tracking.imageCount >= this.REQUIRED_IMAGE_COUNT) {
-      console.log(`[BotMessageTracker] ✅ ${this.REQUIRED_IMAGE_COUNT}+ imagens recebidas! Enviando "yes" para OCP`);
+      console.log(`[BotMessageTracker] ✅ ${this.REQUIRED_IMAGE_COUNT}+ imagens recebidas! Enviando "sim" para OCP`);
       // Clear tracking after sending
       this.imageTracking.delete(phoneNumber);
       return true;

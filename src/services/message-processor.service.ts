@@ -195,7 +195,7 @@ export class MessageProcessorService {
     const imageCount = 1; // Each message with media = 1 image
     console.log(`[${timestamp}] 📸 Imagem detectada (${imageCount} imagem nesta mensagem)`);
     
-    // Record images and check if we should send "yes" to OCP
+    // Record images and check if we should send "sim" to OCP
     const shouldSendYes = botMessageTracker.recordImage(phoneNumber, imageCount);
     
     // Log USER message with media
@@ -208,9 +208,9 @@ export class MessageProcessorService {
       messageId: message.key?.id
     });
     
-    // If we received 3+ images, send "yes" to OCP
+    // If we received 3+ images, send "sim" to OCP
     if (shouldSendYes) {
-      console.log(`[${timestamp}] 🎯 3+ imagens recebidas! Enviando "yes" para OCP`);
+      console.log(`[${timestamp}] 🎯 3+ imagens recebidas! Enviando "sim" para OCP`);
       
       const ocpClient = getOCPClient();
       const ws = (ocpClient as any).ws;
@@ -219,18 +219,18 @@ export class MessageProcessorService {
       if (!isConnected) {
         console.error(`[${timestamp}] ⚠️  OCP WebSocket não está conectado!`);
       } else {
-        console.log(`[${timestamp}] ✅ OCP WebSocket está conectado, enviando "yes"...`);
+        console.log(`[${timestamp}] ✅ OCP WebSocket está conectado, enviando "sim"...`);
         
-        // Create a message-like object with "yes" as text
+        // Create a message-like object with "sim" as text
         const yesMessage: WhatsAppMessage = {
           ...message,
           message: {
-            conversation: 'yes'
+            conversation: 'sim'
           }
         };
         
         await ocpClient.handleIncomingWhatsAppMessage(yesMessage);
-        console.log(`[${timestamp}] ✅ "yes" enviado para OCP`);
+        console.log(`[${timestamp}] ✅ "sim" enviado para OCP`);
       }
     }
   }
