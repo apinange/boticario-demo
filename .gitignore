@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+tunnel-url.txt
+*.pid
+temp/
+bot-mode.json
+agent-mode.json
+

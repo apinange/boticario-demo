@@ -1,0 +1,16 @@
+node_modules
+.git
+.env
+*.log
+evolution-api.log
+*.pid
+temp/
+imgs/
+qr-*.png
+tunnel-url.txt
+agent-mode.json
+bot-mode.json
+evolution-api/node_modules
+evolution-api/dist
+evolution-api/instances
+evolution-api/.env
