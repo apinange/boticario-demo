@@ -881,20 +881,42 @@ class OCPWebSocketClient {
   // Direct send methods (used by queue processor)
   private async sendCatalogToWhatsAppDirect(phoneNumber: string): Promise<void> {
     const timestamp = new Date().toISOString();
+    const catalogImageUrl = 'https://minhaloja-resources.grupoboticario.com.br/magazine/1555/page_1.jpg';
+    
     try {
-      // Path to catalog image
-      const imagePath = path.join(process.cwd(), 'imgs', 'catalog.png');
+      let imageBase64: string | null = null;
       
-      // Check if image exists
-      if (!fs.existsSync(imagePath)) {
-        console.error(`[${timestamp}] ❌ Imagem não encontrada: ${imagePath}`);
-        return;
+      // Try to download from URL first
+      try {
+        console.log(`[${timestamp}] 📥 Baixando catálogo da URL: ${catalogImageUrl}`);
+        const response = await axios.get(catalogImageUrl, {
+          responseType: 'arraybuffer',
+          timeout: 30000
+        });
+        
+        const imageBuffer = Buffer.from(response.data);
+        imageBase64 = imageBuffer.toString('base64');
+        console.log(`[${timestamp}] ✅ Catálogo baixado (${(imageBuffer.length / 1024).toFixed(2)} KB)`);
+      } catch (error: any) {
+        console.error(`[${timestamp}] ❌ Erro ao baixar catálogo da URL:`, error.message);
+        console.log(`[${timestamp}] 🔄 Tentando arquivo local...`);
+        
+        // Fallback to local file
+        const imagePath = path.join(process.cwd(), 'imgs', 'catalog.png');
+        if (fs.existsSync(imagePath)) {
+          console.log(`[${timestamp}] 📖 Lendo catálogo do arquivo local: ${imagePath}`);
+          const imageBuffer = fs.readFileSync(imagePath);
+          imageBase64 = imageBuffer.toString('base64');
+        } else {
+          console.error(`[${timestamp}] ❌ Imagem não encontrada: ${imagePath}`);
+          return;
+        }
       }
       
-      // Read image file and convert to base64
-      console.log(`[${timestamp}] 📖 Lendo imagem do catálogo: ${imagePath}`);
-      const imageBuffer = fs.readFileSync(imagePath);
-      const imageBase64 = imageBuffer.toString('base64');
+      if (!imageBase64) {
+        console.error(`[${timestamp}] ❌ Não foi possível obter a imagem do catálogo`);
+        return;
+      }
       
       // Format phone number (add country code if needed)
       let formattedNumber = phoneNumber;
@@ -906,14 +928,13 @@ class OCPWebSocketClient {
       
       console.log(`[${timestamp}] 📤 Enviando catálogo para WhatsApp`);
       console.log(`[${timestamp}]    Phone: ${formattedNumber}`);
-      console.log(`[${timestamp}]    Image size: ${(imageBuffer.length / 1024).toFixed(2)} KB`);
       
       // Send image via Evolution API service (includes instance verification)
       const messageId = await evolutionApiService.sendMedia(
         formattedNumber,
         'image',
         imageBase64,
-        'catalog.png',
+        'catalog.jpg',
         ''
       );
       
@@ -926,7 +947,7 @@ class OCPWebSocketClient {
         await logger.logBotMessage({
           phoneNumber: phoneNumber,
           text: '', // Catalog has no text, only image
-          imagePath: imagePath,
+          imagePath: catalogImageUrl, // Store URL instead of local path
           messageId: messageId
         });
       }
