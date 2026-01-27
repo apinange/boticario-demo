@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { webhookConfigService } from '../services/webhook-config.service';
 
 export const setupWebhook = async (req: Request, res: Response) => {
+  const timestamp = new Date().toISOString();
+  
   try {
     const { webhookUrl, instanceName } = req.body;
     
@@ -9,9 +11,14 @@ export const setupWebhook = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'webhookUrl is required' });
     }
     
+    console.log(`[${timestamp}] 📡 Setup webhook request received`);
+    console.log(`[${timestamp}]    Webhook URL: ${webhookUrl}`);
+    console.log(`[${timestamp}]    Instance Name: ${instanceName || 'default'}`);
+    
     const result = await webhookConfigService.setupWebhook(webhookUrl, instanceName);
     res.json({ success: true, data: result });
   } catch (error: any) {
+    console.error(`[${timestamp}] ❌ Error setting up webhook:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
