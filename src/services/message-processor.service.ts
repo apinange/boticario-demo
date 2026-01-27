@@ -46,17 +46,20 @@ export class MessageProcessorService {
     const remoteJid = message.key?.remoteJid || '';
     const phoneNumber = remoteJid.split('@')[0] || 'unknown';
     
+    console.log(`[${timestamp}] 🔍 Processando mensagem:`);
+    console.log(`[${timestamp}]    RemoteJid: ${remoteJid}`);
+    console.log(`[${timestamp}]    PhoneNumber extraído: ${phoneNumber}`);
+    console.log(`[${timestamp}]    DEFAULT_PHONE_NUMBER configurado: ${config.defaultPhoneNumber}`);
+    
     // Validate phone number
-    if (!validatePhoneNumber(phoneNumber)) {
-      const normalizedPhone = phoneNumber.replace(/[+\s-]/g, '');
-      const normalizedDefault = config.defaultPhoneNumber.replace(/[+\s-]/g, '');
-      
-      if (normalizedPhone !== normalizedDefault) {
-        console.log(`[${timestamp}] ⚠️  Número não autorizado: ${phoneNumber}`);
-        console.log(`[${timestamp}]    Número esperado: ${config.defaultPhoneNumber}`);
-        console.log(`[${timestamp}]    Mensagem ignorada.`);
-        return;
-      }
+    const normalizedPhone = phoneNumber.replace(/[+\s-]/g, '');
+    const normalizedDefault = config.defaultPhoneNumber.replace(/[+\s-]/g, '');
+    
+    if (normalizedPhone !== normalizedDefault) {
+      console.log(`[${timestamp}] ⚠️  Número não autorizado: ${phoneNumber} (normalizado: ${normalizedPhone})`);
+      console.log(`[${timestamp}]    Número esperado: ${config.defaultPhoneNumber} (normalizado: ${normalizedDefault})`);
+      console.log(`[${timestamp}]    Mensagem ignorada.`);
+      return;
     }
 
     console.log(`[${timestamp}] ✅ Número autorizado: ${phoneNumber}`);
