@@ -201,7 +201,7 @@ Todos os comandos CLI agora estão disponíveis como endpoints REST:
 - `GET /api/agent-mode` - Status do modo agente
 - `POST /api/agent-mode/enable` - Ativar modo agente
 - `POST /api/agent-mode/disable` - Desativar modo agente
-- `POST /api/webhook/setup` - Configurar webhook
+- `GET /api/webhook` - Verificar configuração do webhook (webhook é configurado automaticamente)
 
 ### OCP
 
