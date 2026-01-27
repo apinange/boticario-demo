@@ -102,14 +102,40 @@ export const createInstance = async (req: Request, res: Response) => {
 export const getQrCode = async (req: Request, res: Response) => {
   try {
     const { instanceName } = req.query;
-    const qrData = await instanceService.getQrCode(instanceName as string);
+    const name = (instanceName as string) || undefined;
+    
+    // First, check if instance exists, if not, create it
+    try {
+      const instances = await instanceService.fetchInstances();
+      const instanceExists = instances.some((inst: any) => 
+        inst.instance?.instanceName === name || 
+        inst.instanceName === name ||
+        (!name && (inst.instance?.instanceName === 'default' || inst.instanceName === 'default'))
+      );
+      
+      if (!instanceExists) {
+        console.log(`[${new Date().toISOString()}] ℹ️  Instance "${name || 'default'}" not found, creating it...`);
+        await instanceService.createInstance(name);
+        // Wait a bit for instance to be ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (createError: any) {
+      // If instance already exists, that's fine, continue
+      if (!createError.message.includes('already exists')) {
+        console.error(`[${new Date().toISOString()}] ⚠️  Error checking/creating instance:`, createError.message);
+      }
+    }
+    
+    // Now get QR code
+    const qrData = await instanceService.getQrCode(name);
     
     if (qrData) {
       res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
     } else {
-      res.status(404).json({ error: 'QR code not available yet' });
+      res.status(404).json({ error: 'QR code not available yet. Please try again in a few seconds.' });
     }
   } catch (error: any) {
+    console.error(`[${new Date().toISOString()}] ❌ Error getting QR code:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
