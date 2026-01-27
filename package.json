@@ -36,6 +36,7 @@
     "@types/cors": "^2.8.19",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/ws": "^8.5.10",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "axios": "^1.6.0",
     "cors": "^2.8.6",
@@ -45,14 +46,13 @@
     "openai": "^4.104.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "typescript": "^5.3.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.3",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.0",
-    "@types/ws": "^8.5.10",
-    "tsx": "^4.7.0",
-    "typescript": "^5.3.0"
+    "tsx": "^4.7.0"
   }
 }

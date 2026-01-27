@@ -169,7 +169,7 @@ class OCPWebSocketClient {
         this.handleOCPResponse(data.toString());
       });
 
-      this.ws.on('error', (error) => {
+      this.ws.on('error', (error: Error) => {
         const timestamp = new Date().toISOString();
         console.error(`\n[${timestamp}] ❌ ERRO no WebSocket do OCP:`);
         console.error(`[${timestamp}]    Mensagem: ${error.message}`);
@@ -179,7 +179,7 @@ class OCPWebSocketClient {
         this.scheduleReconnect();
       });
 
-      this.ws.on('close', (code, reason) => {
+      this.ws.on('close', (code: number, reason: Buffer) => {
         const timestamp = new Date().toISOString();
         const reasonStr = reason.toString();
         console.log(`\n[${timestamp}] 🔌 WebSocket do OCP fechado`);
