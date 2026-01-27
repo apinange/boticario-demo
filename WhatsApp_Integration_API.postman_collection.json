@@ -1,0 +1,445 @@
+{
+	"info": {
+		"_postman_id": "whatsapp-integration-api",
+		"name": "WhatsApp Integration API",
+		"description": "Collection completa da API de Integração WhatsApp com Evolution API e OCP",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Instance Management",
+			"item": [
+				{
+					"name": "Get All Instances",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/instances",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances"]
+						}
+					}
+				},
+				{
+					"name": "Create Instance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"instanceName\": \"default\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/instances",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances"]
+						}
+					}
+				},
+				{
+					"name": "Get QR Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/instances/qr?instanceName=default",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances", "qr"],
+							"query": [
+								{
+									"key": "instanceName",
+									"value": "default"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reconnect Instance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"instanceName\": \"default\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/instances/reconnect",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances", "reconnect"]
+						}
+					}
+				},
+				{
+					"name": "Logout Instance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"instanceName\": \"default\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/instances/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances", "logout"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Webhook",
+			"item": [
+				{
+					"name": "Setup Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"webhookUrl\": \"{{base_url}}/webhook\",\n  \"instanceName\": \"default\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhook/setup",
+							"host": ["{{base_url}}"],
+							"path": ["api", "webhook", "setup"]
+						}
+					}
+				},
+				{
+					"name": "Webhook (Evolution API)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event\": \"MESSAGES_UPSERT\",\n  \"instance\": \"default\",\n  \"data\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/webhook",
+							"host": ["{{base_url}}"],
+							"path": ["webhook"]
+						},
+						"description": "Endpoint que recebe webhooks da Evolution API. Normalmente chamado automaticamente pela Evolution API."
+					}
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phoneNumber\": \"5511999999999\",\n  \"text\": \"Olá! Esta é uma mensagem de teste.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/messages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages"]
+						}
+					}
+				},
+				{
+					"name": "Send OCP Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phoneNumber\": \"5511999999999\",\n  \"text\": \"Mensagem iniciada pelo OCP\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/messages/ocp",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messages", "ocp"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Bot Mode",
+			"item": [
+				{
+					"name": "Get Bot Mode",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bot-mode",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bot-mode"]
+						}
+					}
+				},
+				{
+					"name": "Set Bot Mode - Proactive",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mode\": \"proactive\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bot-mode",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bot-mode"]
+						}
+					}
+				},
+				{
+					"name": "Set Bot Mode - Reactive",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mode\": \"reactive\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bot-mode",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bot-mode"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Agent Mode",
+			"item": [
+				{
+					"name": "Get Agent Mode Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/agent-mode?phoneNumber=5511999999999",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agent-mode"],
+							"query": [
+								{
+									"key": "phoneNumber",
+									"value": "5511999999999",
+									"description": "Optional - uses default if not provided"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "List All Agent Modes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/agent-mode/list",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agent-mode", "list"]
+						}
+					}
+				},
+				{
+					"name": "Enable Agent Mode",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phoneNumber\": \"5511999999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/agent-mode/enable",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agent-mode", "enable"]
+						}
+					}
+				},
+				{
+					"name": "Disable Agent Mode",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phoneNumber\": \"5511999999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/agent-mode/disable",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agent-mode", "disable"]
+						}
+					}
+				},
+				{
+					"name": "Clear All Agent Modes",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/agent-mode/clear",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agent-mode", "clear"]
+						}
+					}
+				},
+				{
+					"name": "Send Agent Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"Olá! Sou o agente, como posso ajudar?\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/agent/message",
+							"host": ["{{base_url}}"],
+							"path": ["agent", "message"]
+						},
+						"description": "Envia mensagem do agente para o WhatsApp. O número do destinatário é automaticamente definido como o número padrão configurado."
+					}
+				}
+			]
+		},
+		{
+			"name": "OCP Management",
+			"item": [
+				{
+					"name": "Restart OCP Session",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ocp/restart",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ocp", "restart"]
+						}
+					}
+				},
+				{
+					"name": "Start Conversation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ocp/start-conversation",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ocp", "start-conversation"]
+						},
+						"description": "Inicia uma conversa no modo proactive. Só funciona se o bot estiver em modo proactive."
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://whatsapp-integration-6ofl.onrender.com",
+			"type": "string"
+		},
+		{
+			"key": "evolution_api_url",
+			"value": "https://evolution-api-95p6.onrender.com",
+			"type": "string"
+		}
+	]
+}
