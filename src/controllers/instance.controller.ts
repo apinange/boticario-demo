@@ -87,13 +87,24 @@ export const createInstance = async (req: Request, res: Response) => {
  *         schema:
  *           type: string
  *         description: Name of the instance (optional, uses default if not provided)
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, image, png]
+ *         description: Response format - 'json' returns JSON with base64, 'image' or 'png' returns PNG image directly
+ *         default: json
  *     responses:
  *       200:
- *         description: QR code data
+ *         description: QR code data (JSON) or PNG image
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/QrCode'
+ *           image/png:
+ *             schema:
+ *               type: string
+ *               format: binary
  *       404:
  *         description: QR code not available yet
  *       500:
@@ -101,8 +112,9 @@ export const createInstance = async (req: Request, res: Response) => {
  */
 export const getQrCode = async (req: Request, res: Response) => {
   try {
-    const { instanceName } = req.query;
+    const { instanceName, format } = req.query;
     const name = (instanceName as string) || undefined;
+    const returnImage = format === 'image' || format === 'png';
     
     // First, check if instance exists, if not, create it
     try {
@@ -130,6 +142,18 @@ export const getQrCode = async (req: Request, res: Response) => {
     const qrData = await instanceService.getQrCode(name);
     
     if (qrData) {
+      // If format=image, return the image directly
+      if (returnImage && qrData.base64) {
+        // Remove data URL prefix if present
+        const base64Data = qrData.base64.replace(/^data:image\/png;base64,/, '');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
+        return res.send(imageBuffer);
+      }
+      
+      // Otherwise return JSON
       res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
     } else {
       res.status(404).json({ error: 'QR code not available yet. Please try again in a few seconds.' });

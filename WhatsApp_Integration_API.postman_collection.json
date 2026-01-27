@@ -77,13 +77,41 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/instances/qr?instanceName=default",
+							"raw": "{{base_url}}/api/instances/qr?instanceName=default&format=json",
 							"host": ["{{base_url}}"],
 							"path": ["api", "instances", "qr"],
 							"query": [
 								{
 									"key": "instanceName",
 									"value": "default"
+								},
+								{
+									"key": "format",
+									"value": "json",
+									"description": "Response format: 'json' for JSON with base64, 'image' or 'png' for PNG image"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get QR Code (Image)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/instances/qr?instanceName=default&format=image",
+							"host": ["{{base_url}}"],
+							"path": ["api", "instances", "qr"],
+							"query": [
+								{
+									"key": "instanceName",
+									"value": "default"
+								},
+								{
+									"key": "format",
+									"value": "image",
+									"description": "Returns PNG image directly - Postman will display it automatically"
 								}
 							]
 						}
