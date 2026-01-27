@@ -237,15 +237,41 @@ export class InstanceService {
         `${this.baseUrl}/instance/logout/${name}`,
         {
           headers: {
-            apikey: this.apiKey
+            apikey: this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            instanceName: name
           },
           timeout: 10000
         }
       );
     } catch (error: any) {
-      if (axios.isAxiosError(error) && error.response?.status !== 404) {
-        throw error;
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          // Instance not found is OK, just log it
+          return;
+        }
+        if (error.response?.status === 400) {
+          const errorData = error.response.data;
+          let errorMessage: string;
+          if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (errorData?.response?.message) {
+            errorMessage = Array.isArray(errorData.response.message) 
+              ? errorData.response.message.join(', ') 
+              : String(errorData.response.message);
+          } else if (errorData?.message) {
+            errorMessage = Array.isArray(errorData.message) 
+              ? errorData.message.join(', ') 
+              : String(errorData.message);
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+          throw new Error(`Evolution API returned 400: ${errorMessage}`);
+        }
       }
+      throw error;
     }
   }
 }
