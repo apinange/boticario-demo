@@ -1,7 +1,7 @@
 services:
-  # Webhook Server - Main service
+  # Main Application - WhatsApp Integration Service
   - type: web
-    name: whatsapp-webhook-server
+    name: whatsapp-integration
     env: node
     plan: free
     buildCommand: npm install
@@ -11,30 +11,35 @@ services:
         value: production
       - key: WEBHOOK_PORT
         value: 3000
-      # IMPORTANTE: Configure estas URLs manualmente após o deploy
-      # SERVER_URL=https://evolution-api.onrender.com
-      # EVOLUTION_API_URL=https://evolution-api.onrender.com
+      # Evolution API Configuration
+      - key: SERVER_URL
+        sync: false  # Set to Evolution API URL after deployment
+      - key: EVOLUTION_API_URL
+        sync: false  # Set to Evolution API URL after deployment
       - key: AUTHENTICATION_API_KEY
         sync: false  # Set in Render dashboard
       - key: INSTANCE_NAME
         value: default
+      # WhatsApp Configuration
       - key: DEFAULT_PHONE_NUMBER
+        sync: false  # Set in Render dashboard
+      # OCP Configuration
+      - key: OCP_WS_URL
         sync: false  # Set in Render dashboard
       - key: OCP_API_KEY
         sync: false  # Set in Render dashboard
+      # Optional Services
       - key: OPENAI_API_KEY
-        sync: false  # Set in Render dashboard (optional)
+        sync: false  # Optional - for audio transcription
       - key: LOGGING_ENDPOINT_URL
         sync: false  # Set in Render dashboard
-      - key: DATABASE_URL
-        sync: false  # Set in Render dashboard (from PostgreSQL service)
       - key: REDIS_URL
         fromService:
           name: whatsapp-redis
           type: redis
           property: connectionString
 
-  # Evolution API
+  # Evolution API - WhatsApp API Service
   - type: web
     name: evolution-api
     env: node
@@ -46,7 +51,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false  # Set in Render dashboard (from PostgreSQL service)
+        sync: false  # Set from PostgreSQL service
       - key: REDIS_URL
         fromService:
           name: whatsapp-redis
@@ -54,8 +59,8 @@ services:
           property: connectionString
       - key: AUTHENTICATION_API_KEY
         sync: false  # Set in Render dashboard
-      # IMPORTANTE: Configure esta URL manualmente após o deploy
-      # SERVER_URL será a URL do próprio serviço (ex: https://evolution-api.onrender.com)
+      - key: SERVER_URL
+        sync: false  # Will be auto-set to service URL
 
   # Redis
   - type: redis
