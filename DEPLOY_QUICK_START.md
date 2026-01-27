@@ -1,6 +1,8 @@
-# Deploy Rápido no Render
+# Deploy Rápido no Render - Checklist
 
-## Checklist Rápido
+Guia rápido para deploy do projeto no Render.
+
+## ✅ Checklist de Deploy
 
 ### 1. Preparar Repositório
 ```bash
@@ -9,71 +11,138 @@ git commit -m "Prepare for Render deployment"
 git push
 ```
 
-### 2. Criar PostgreSQL (OBRIGATÓRIO - Antes do Blueprint)
-1. No Render, clique em "New" > "PostgreSQL"
-2. Nome: `whatsapp-postgres`
-3. Plano: Free
-4. Database: `evolution`
-5. Clique em "Create Database"
-6. **Copie a `DATABASE_URL`** - você precisará dela depois
+### 2. Criar PostgreSQL (OBRIGATÓRIO - Primeiro Passo!)
 
-### 3. Criar Conta e Conectar Repositório
-1. Acesse [render.com](https://render.com)
-2. Faça login com GitHub
-3. Clique em "New" > "Blueprint"
-4. Conecte seu repositório
-5. Render detectará o `render.yaml` automaticamente
+⚠️ **CRIE O POSTGRESQL ANTES DO BLUEPRINT**
+
+1. Render Dashboard → **"New"** → **"PostgreSQL"**
+2. Nome: `whatsapp-postgres`
+3. Database: `evolution`
+4. Plan: **Free**
+5. **Create Database**
+6. **Copie a `DATABASE_URL`**
+
+### 3. Deploy via Blueprint
+
+1. Render Dashboard → **"New"** → **"Blueprint"**
+2. Conecte repositório: `https://github.com/apinange/boticario-demo.git`
+3. Render detecta `render.yaml` automaticamente
+4. Clique em **"Apply"**
 
 ### 4. Configurar Variáveis de Ambiente
 
-Após o deploy inicial, configure manualmente:
+#### Evolution API (`evolution-api`)
 
-#### Evolution API:
-- `AUTHENTICATION_API_KEY` = sua chave
-- `DATABASE_URL` = URL do PostgreSQL criado (use "Add from..." > PostgreSQL)
-- `REDIS_URL` = URL do Redis (use "Add from..." > Redis)
-- `SERVER_URL` = URL do próprio serviço (ex: `https://evolution-api.onrender.com`)
+**Conectar automaticamente:**
+- `DATABASE_URL` → PostgreSQL (`whatsapp-postgres`)
+- `REDIS_URL` → Redis (`whatsapp-redis`)
 
-#### Webhook Server:
-- `DATABASE_URL` = URL do PostgreSQL criado (use "Add from..." > PostgreSQL)
-- `REDIS_URL` = URL do Redis (use "Add from..." > Redis)
-- `AUTHENTICATION_API_KEY` = mesma chave do Evolution API
-- `SERVER_URL` = URL do Evolution API
-- `EVOLUTION_API_URL` = URL do Evolution API
-- `DEFAULT_PHONE_NUMBER` = número do usuário (ex: `18259622852`)
-- `OCP_API_KEY` = sua chave OCP
-- `OPENAI_API_KEY` = sua chave OpenAI (opcional)
-- `LOGGING_ENDPOINT_URL` = URL do endpoint de logging
+**Adicionar manualmente:**
+```
+NODE_ENV=production
+AUTHENTICATION_API_KEY=<sua_chave>
+SERVER_URL=https://evolution-api.onrender.com
+```
+*(Atualize `SERVER_URL` com a URL real após o deploy)*
 
-### 5. Manter Serviços Ativos (Plano Free)
+#### WhatsApp Integration (`whatsapp-integration`)
 
-Configure UptimeRobot para pingar:
-- `https://whatsapp-webhook-server.onrender.com/health` (a cada 5 min)
-- `https://evolution-api.onrender.com` (a cada 5 min)
+**Conectar automaticamente:**
+- `REDIS_URL` → Redis (`whatsapp-redis`)
+
+**Adicionar manualmente:**
+```
+NODE_ENV=production
+WEBHOOK_PORT=3000
+
+# Evolution API
+SERVER_URL=https://evolution-api.onrender.com
+EVOLUTION_API_URL=https://evolution-api.onrender.com
+AUTHENTICATION_API_KEY=<mesma_chave>
+INSTANCE_NAME=default
+
+# WhatsApp
+DEFAULT_PHONE_NUMBER=<número_do_usuário>
+
+# OCP
+OCP_WS_URL=wss://seu-endpoint-ocp.com
+OCP_API_KEY=<sua_chave_ocp>
+
+# Opcional
+OPENAI_API_KEY=<sua_chave_openai>
+LOGGING_ENDPOINT_URL=<url_do_logging>
+```
+
+### 5. URLs Após Deploy
+
+- **WhatsApp Integration**: `https://whatsapp-integration.onrender.com`
+- **Evolution API**: `https://evolution-api.onrender.com`
+- **Swagger Docs**: `https://whatsapp-integration.onrender.com/api-docs`
 
 ### 6. Configurar Webhook
 
-Após tudo rodando:
 ```bash
-curl -X POST https://evolution-api.onrender.com/webhook/set/default \
-  -H "apikey: SUA_CHAVE" \
+curl -X POST https://whatsapp-integration.onrender.com/api/webhook/setup \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://whatsapp-webhook-server.onrender.com/webhook",
-    "webhook_by_events": false,
-    "webhook_base64": false,
-    "events": ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "CONNECTION_UPDATE", "QRCODE_UPDATE"]
+    "webhookUrl": "https://whatsapp-integration.onrender.com/webhook",
+    "instanceName": "default"
   }'
 ```
 
-## URLs Finais
+### 7. Criar Instância WhatsApp
 
-- **Webhook Server**: `https://whatsapp-webhook-server.onrender.com`
-- **Evolution API**: `https://evolution-api.onrender.com`
-- **Agent Endpoint**: `https://whatsapp-webhook-server.onrender.com/agent/message`
+```bash
+curl -X POST https://whatsapp-integration.onrender.com/api/instances \
+  -H "Content-Type: application/json" \
+  -d '{"instanceName": "default"}'
+```
 
-## Próximos Passos
+### 8. Obter QR Code
 
-1. Crie a instância do WhatsApp
-2. Escaneie o QR code
-3. Teste o sistema
+```bash
+curl https://whatsapp-integration.onrender.com/api/instances/qr?instanceName=default
+```
+
+Use o campo `base64` da resposta para exibir o QR code.
+
+### 9. Escanear QR Code
+
+1. WhatsApp → Configurações → Aparelhos conectados
+2. "Conectar um aparelho"
+3. Escanear QR code
+
+### 10. Manter Serviços Ativos (UptimeRobot)
+
+1. Crie conta em [uptimerobot.com](https://uptimerobot.com)
+2. Adicione monitors:
+   - `https://whatsapp-integration.onrender.com/health` (5 min)
+   - `https://evolution-api.onrender.com` (5 min)
+
+## 🎯 Testar API
+
+Acesse a documentação Swagger:
+
+**`https://whatsapp-integration.onrender.com/api-docs`**
+
+Teste os endpoints diretamente no Swagger UI!
+
+## 📋 Endpoints Principais
+
+- `GET /health` - Health check
+- `GET /status` - Status do sistema
+- `GET /api/instances` - Listar instâncias
+- `POST /api/instances` - Criar instância
+- `GET /api/instances/qr` - Obter QR code
+- `POST /api/messages` - Enviar mensagem
+- `POST /api/bot-mode` - Configurar modo bot
+- `POST /api/agent-mode/enable` - Ativar modo agente
+
+Veja [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) para lista completa.
+
+## ⚠️ Lembrete
+
+- Serviços free "dormem" após 15 min → Configure UptimeRobot
+- PostgreSQL deve ser criado ANTES do Blueprint
+- Configure todas as variáveis de ambiente após o deploy
+- Atualize `SERVER_URL` e `EVOLUTION_API_URL` com as URLs reais
