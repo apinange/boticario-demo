@@ -42,8 +42,10 @@ git push
 NODE_ENV=production
 AUTHENTICATION_API_KEY=<sua_chave>
 SERVER_URL=https://evolution-api.onrender.com
+DATABASE_CONNECTION_URI=<mesmo_valor_de_DATABASE_URL>
 ```
 *(Atualize `SERVER_URL` com a URL real após o deploy)*
+*(`DATABASE_CONNECTION_URI` deve ter o mesmo valor de `DATABASE_URL` - use a Internal URL)*
 
 #### WhatsApp Integration (`whatsapp-integration`)
 
