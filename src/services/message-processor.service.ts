@@ -20,17 +20,68 @@ export class MessageProcessorService {
       // Data can be a single message object or array
       const messageData = Array.isArray(event.data) ? event.data : [event.data];
       
+      console.log(`\n[${timestamp}] 📥 Webhook received from Evolution API`);
+      console.log(`[${timestamp}]    Event: ${event.event || 'unknown'}`);
+      console.log(`[${timestamp}]    Instance: ${event.instance || 'unknown'}`);
+      console.log(`[${timestamp}]    Raw messages count: ${messageData.length}`);
+      
+      // Log message types for debugging
+      messageData.forEach((msg, index) => {
+        const hasAudio = !!msg.message?.audioMessage;
+        const hasText = !!msg.message?.conversation || !!msg.message?.extendedTextMessage;
+        const hasImage = !!msg.message?.imageMessage;
+        const hasVideo = !!msg.message?.videoMessage;
+        const hasDocument = !!msg.message?.documentMessage;
+        const fromMe = msg.key?.fromMe;
+        const remoteJid = msg.key?.remoteJid || 'unknown';
+        const msgStatus = (msg as any).status;
+        const messageType = (msg as any).messageType;
+        
+        console.log(`[${timestamp}]    Message ${index + 1}:`);
+        console.log(`[${timestamp}]      - RemoteJid: ${remoteJid}`);
+        console.log(`[${timestamp}]      - FromMe: ${fromMe}`);
+        console.log(`[${timestamp}]      - Status: ${msgStatus || 'N/A'}`);
+        console.log(`[${timestamp}]      - MessageType: ${messageType || 'N/A'}`);
+        console.log(`[${timestamp}]      - Has Audio: ${hasAudio}`);
+        console.log(`[${timestamp}]      - Has Text: ${hasText}`);
+        console.log(`[${timestamp}]      - Has Image: ${hasImage}`);
+        console.log(`[${timestamp}]      - Has Video: ${hasVideo}`);
+        console.log(`[${timestamp}]      - Has Document: ${hasDocument}`);
+        
+        // Log full message structure for audio messages
+        if (hasAudio) {
+          console.log(`[${timestamp}]      - Audio Message Structure:`, JSON.stringify(msg.message?.audioMessage, null, 2));
+        }
+      });
+      
+      // Filter out status updates (DELIVERY_ACK, READ, etc.) - these are not actual messages
+      let messages = messageData.filter((msg: any) => {
+        const status = msg.status;
+        // Only process messages without status or with status that indicates a new message
+        // DELIVERY_ACK, READ, etc. are status updates, not new messages
+        if (status && status !== 'PENDING' && status !== 'SENT') {
+          console.log(`[${timestamp}]    ⏭️  Ignorando atualização de status: ${status}`);
+          return false;
+        }
+        return true;
+      });
+      console.log(`[${timestamp}]    After status filter: ${messages.length} message(s)`);
+      
       // Filter messages
-      let messages = filterGroupMessages(messageData);
+      messages = filterGroupMessages(messages);
+      console.log(`[${timestamp}]    After group filter: ${messages.length} message(s)`);
+      
       messages = filterSelfMessages(messages);
+      console.log(`[${timestamp}]    After self filter: ${messages.length} message(s)`);
+      
       messages = filterValidMessages(messages);
+      console.log(`[${timestamp}]    After valid filter: ${messages.length} message(s)`);
       
       // Only log webhook if there are messages to process
       if (messages.length > 0) {
-        console.log(`\n[${timestamp}] 📥 Webhook received from Evolution API`);
-        console.log(`[${timestamp}]    Event: ${event.event || 'unknown'}`);
-        console.log(`[${timestamp}]    Instance: ${event.instance || 'unknown'}`);
         console.log(`[${timestamp}] 📦 Processing ${messages.length} message(s)`);
+      } else {
+        console.log(`[${timestamp}] ⚠️  No messages to process after filtering`);
       }
       
       // Process each message
@@ -64,9 +115,16 @@ export class MessageProcessorService {
 
     console.log(`[${timestamp}] ✅ Número autorizado: ${phoneNumber}`);
 
+    // Debug: Log message structure
+    console.log(`[${timestamp}] 🔍 Estrutura da mensagem:`);
+    console.log(`[${timestamp}]    message.message keys: ${Object.keys(message.message || {}).join(', ')}`);
+    
     // Check for audio message
     const audioMessage = message.message?.audioMessage;
+    console.log(`[${timestamp}]    audioMessage exists: ${!!audioMessage}`);
     if (audioMessage) {
+      console.log(`[${timestamp}]    audioMessage.id: ${audioMessage.id || 'N/A'}`);
+      console.log(`[${timestamp}]    audioMessage.mimetype: ${audioMessage.mimetype || 'N/A'}`);
       await this.processAudioMessage(message, phoneNumber, timestamp);
       return;
     }
