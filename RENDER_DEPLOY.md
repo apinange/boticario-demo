@@ -33,10 +33,13 @@ git push
 
 #### Opção A: Deploy Automático via render.yaml (Recomendado)
 
+**IMPORTANTE**: O PostgreSQL não pode ser criado via Blueprint. Crie-o manualmente primeiro (veja passo 3.1 abaixo), depois:
+
 1. No dashboard do Render, clique em "New" > "Blueprint"
 2. Conecte seu repositório
 3. Render detectará automaticamente o `render.yaml`
 4. Revise as configurações e clique em "Apply"
+5. Após o deploy, configure `DATABASE_URL` nos serviços web conectando ao PostgreSQL criado manualmente
 
 #### Opção B: Criar Serviços Manualmente
 

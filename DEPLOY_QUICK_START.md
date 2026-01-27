@@ -9,22 +9,34 @@ git commit -m "Prepare for Render deployment"
 git push
 ```
 
-### 2. Criar Conta e Conectar Repositório
+### 2. Criar PostgreSQL (OBRIGATÓRIO - Antes do Blueprint)
+1. No Render, clique em "New" > "PostgreSQL"
+2. Nome: `whatsapp-postgres`
+3. Plano: Free
+4. Database: `evolution`
+5. Clique em "Create Database"
+6. **Copie a `DATABASE_URL`** - você precisará dela depois
+
+### 3. Criar Conta e Conectar Repositório
 1. Acesse [render.com](https://render.com)
 2. Faça login com GitHub
 3. Clique em "New" > "Blueprint"
 4. Conecte seu repositório
 5. Render detectará o `render.yaml` automaticamente
 
-### 3. Configurar Variáveis de Ambiente
+### 4. Configurar Variáveis de Ambiente
 
 Após o deploy inicial, configure manualmente:
 
 #### Evolution API:
 - `AUTHENTICATION_API_KEY` = sua chave
+- `DATABASE_URL` = URL do PostgreSQL criado (use "Add from..." > PostgreSQL)
+- `REDIS_URL` = URL do Redis (use "Add from..." > Redis)
 - `SERVER_URL` = URL do próprio serviço (ex: `https://evolution-api.onrender.com`)
 
 #### Webhook Server:
+- `DATABASE_URL` = URL do PostgreSQL criado (use "Add from..." > PostgreSQL)
+- `REDIS_URL` = URL do Redis (use "Add from..." > Redis)
 - `AUTHENTICATION_API_KEY` = mesma chave do Evolution API
 - `SERVER_URL` = URL do Evolution API
 - `EVOLUTION_API_URL` = URL do Evolution API
@@ -33,13 +45,13 @@ Após o deploy inicial, configure manualmente:
 - `OPENAI_API_KEY` = sua chave OpenAI (opcional)
 - `LOGGING_ENDPOINT_URL` = URL do endpoint de logging
 
-### 4. Manter Serviços Ativos (Plano Free)
+### 5. Manter Serviços Ativos (Plano Free)
 
 Configure UptimeRobot para pingar:
 - `https://whatsapp-webhook-server.onrender.com/health` (a cada 5 min)
 - `https://evolution-api.onrender.com` (a cada 5 min)
 
-### 5. Configurar Webhook
+### 6. Configurar Webhook
 
 Após tudo rodando:
 ```bash
