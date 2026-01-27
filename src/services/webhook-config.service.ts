@@ -18,12 +18,8 @@ export class WebhookConfigService {
    */
   private getWebhookUrl(req?: any): string {
     // Try environment variable first (for Render/production)
-    // Render provides RENDER_EXTERNAL_URL for web services
-    const envWebhookUrl = process.env.WEBHOOK_SERVER_URL || 
-                         process.env.WHATSAPP_INTEGRATION_URL ||
-                         process.env.RENDER_EXTERNAL_URL;
-    
-    if (envWebhookUrl && !envWebhookUrl.includes('localhost') && !envWebhookUrl.includes('127.0.0.1')) {
+    const envWebhookUrl = process.env.WEBHOOK_SERVER_URL || process.env.WHATSAPP_INTEGRATION_URL;
+    if (envWebhookUrl && !envWebhookUrl.includes('localhost')) {
       return `${envWebhookUrl.replace(/\/$/, '')}/webhook`;
     }
     
@@ -73,10 +69,12 @@ export class WebhookConfigService {
     console.log(`[${timestamp}]    Evolution API URL: ${this.baseUrl}`);
     console.log(`[${timestamp}]    Webhook URL: ${webhookUrl}`);
     
-    // First, verify that the instance exists
+    // First, verify that the instance exists and is ready
     try {
       console.log(`[${timestamp}] 🔍 Verificando se a instância "${name}" existe...`);
       const instances = await instanceService.fetchInstances();
+      let foundInstance: any = null;
+      
       const instanceExists = instances.some(
         (inst: any) => {
           // Try multiple possible field names
@@ -84,7 +82,11 @@ export class WebhookConfigService {
                               inst.instanceName || 
                               inst.instance?.instanceName || 
                               inst.instance?.name;
-          return instanceName === name;
+          const matches = instanceName === name;
+          if (matches) {
+            foundInstance = inst;
+          }
+          return matches;
         }
       );
       
@@ -94,7 +96,15 @@ export class WebhookConfigService {
         throw new Error(errorMsg);
       }
       
-      console.log(`[${timestamp}] ✅ Instância "${name}" encontrada`);
+      // Log instance details
+      const connectionStatus = foundInstance?.connectionStatus || 'N/A';
+      console.log(`[${timestamp}] ✅ Instância "${name}" encontrada (connectionStatus: ${connectionStatus})`);
+      
+      // Warn if instance is not connected (but continue anyway - Evolution API might still accept webhook config)
+      if (connectionStatus !== 'open') {
+        console.warn(`[${timestamp}] ⚠️  Instância existe mas não está conectada (status: ${connectionStatus})`);
+        console.warn(`[${timestamp}]    Tentando configurar webhook mesmo assim...`);
+      }
     } catch (checkError: any) {
       // If it's our custom error, throw it
       if (checkError.message.includes('does not exist')) {
@@ -161,7 +171,13 @@ export class WebhookConfigService {
               : String(errorData.message);
           }
           
-          const fullError = `Instance "${name}" not found in Evolution API. Please create the instance first using POST /api/instances or GET /api/instances/qr. Error: ${errorMessage}`;
+          // Check if instance exists in database but Evolution API can't find it
+          console.error(`[${timestamp}] ❌ Evolution API retornou 404 ao configurar webhook`);
+          console.error(`[${timestamp}]    Isso pode significar que a instância existe no banco mas não está carregada na memória da Evolution API`);
+          console.error(`[${timestamp}]    Tente reconectar a instância: POST /api/instances/reconnect?instanceName=${name}`);
+          console.error(`[${timestamp}]    Ou recrie a instância: GET /api/instances/qr?instanceName=${name}`);
+          
+          const fullError = `Instance "${name}" not found in Evolution API. The instance may exist in the database but is not loaded in Evolution API memory. Error: ${errorMessage}`;
           console.error(`[${timestamp}] ❌ ${fullError}`);
           throw new Error(fullError);
         }
