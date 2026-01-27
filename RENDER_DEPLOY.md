@@ -128,34 +128,19 @@ Após o deploy, você terá URLs como:
 - **Evolution API**: `https://evolution-api.onrender.com`
 - **API Documentation (Swagger)**: `https://whatsapp-integration.onrender.com/api-docs`
 
-### 7. Configurar Webhook na Evolution API
+### 7. Webhook (Configuração Automática)
 
-Após tudo rodando, configure o webhook usando a API REST:
+O webhook é configurado **automaticamente** quando:
+- O servidor inicia (se a instância já existir)
+- Uma instância é criada
+- Um QR code é gerado
+
+**Não é necessário configurar manualmente!** O sistema detecta automaticamente a URL do servidor e configura o webhook na Evolution API.
+
+Para verificar se o webhook está configurado:
 
 ```bash
-# Opção 1: Via API REST do WhatsApp Integration
-curl -X POST https://whatsapp-integration.onrender.com/api/webhook/setup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "webhookUrl": "https://whatsapp-integration.onrender.com/webhook",
-    "instanceName": "default"
-  }'
-
-# Opção 2: Diretamente na Evolution API
-curl -X POST https://evolution-api.onrender.com/webhook/set/default \
-  -H "apikey: SUA_CHAVE" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://whatsapp-integration.onrender.com/webhook",
-    "webhook_by_events": true,
-    "webhook_base64": false,
-    "events": [
-      "MESSAGES_UPSERT",
-      "MESSAGES_UPDATE",
-      "CONNECTION_UPDATE",
-      "QRCODE_UPDATE"
-    ]
-  }'
+curl https://whatsapp-integration.onrender.com/api/webhook?instanceName=default
 ```
 
 ### 8. Criar Instância do WhatsApp

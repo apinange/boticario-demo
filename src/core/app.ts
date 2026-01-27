@@ -58,7 +58,7 @@ async function autoSetupWebhook() {
   } catch (error: any) {
     // Don't fail startup if webhook setup fails - already logged in autoSetupWebhook
     console.warn(`[${timestamp}] ⚠️  Não foi possível configurar webhook automaticamente.`);
-    console.warn(`[${timestamp}]    Você pode configurar manualmente usando: POST /api/webhook/setup\n`);
+    console.warn(`[${timestamp}]    O webhook será configurado automaticamente quando a instância for criada.\n`);
   }
 }
 

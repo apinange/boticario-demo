@@ -17,8 +17,8 @@ http://localhost:3000/api-docs
 
 ### Webhook
 
-- `POST /webhook` - Endpoint para receber webhooks da Evolution API
-- `POST /api/webhook/setup` - Configurar webhook para uma instância
+- `POST /webhook` - Endpoint para receber webhooks da Evolution API (chamado automaticamente pela Evolution API)
+- `GET /api/webhook` - Verificar configuração do webhook (webhook é configurado automaticamente)
 
 ### Agent
 

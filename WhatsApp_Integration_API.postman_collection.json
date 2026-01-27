@@ -160,24 +160,22 @@
 			"name": "Webhook",
 			"item": [
 				{
-					"name": "Setup Webhook",
+					"name": "Get Webhook Status",
 					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"webhookUrl\": \"{{base_url}}/webhook\",\n  \"instanceName\": \"default\"\n}"
-						},
+						"method": "GET",
+						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/webhook/setup",
+							"raw": "{{base_url}}/api/webhook?instanceName=default",
 							"host": ["{{base_url}}"],
-							"path": ["api", "webhook", "setup"]
-						}
+							"path": ["api", "webhook"],
+							"query": [
+								{
+									"key": "instanceName",
+									"value": "default"
+								}
+							]
+						},
+						"description": "Check if webhook is configured (webhook is auto-configured on startup and instance creation)"
 					}
 				},
 				{

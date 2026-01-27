@@ -11,7 +11,7 @@ import {
   reconnectInstance, 
   logoutInstance 
 } from '../controllers/instance.controller';
-import { setupWebhook, getWebhook } from '../controllers/webhook-config.controller';
+import { getWebhook } from '../controllers/webhook-config.controller';
 import { getBotModeStatus, setBotModeEndpoint } from '../controllers/bot-mode.controller';
 import { 
   getAgentModeStatus, 
@@ -122,34 +122,10 @@ router.post('/api/instances/logout', logoutInstance);
 
 /**
  * @swagger
- * /api/webhook/setup:
- *   post:
- *     summary: Setup webhook for instance
- *     tags: [Webhook Config]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - webhookUrl
- *             properties:
- *               webhookUrl:
- *                 type: string
- *               instanceName:
- *                 type: string
- *     responses:
- *       200:
- *         description: Webhook configured successfully
- */
-router.post('/api/webhook/setup', setupWebhook);
-
-/**
- * @swagger
  * /api/webhook:
  *   get:
  *     summary: Get webhook configuration for instance
+ *     description: Check if webhook is configured (webhook is auto-configured on startup and instance creation)
  *     tags: [Webhook Config]
  *     parameters:
  *       - in: query

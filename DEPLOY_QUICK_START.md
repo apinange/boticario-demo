@@ -85,16 +85,16 @@ LOG_BAILEYS=error  # Logs do Baileys apenas para erros
 - **Evolution API**: `https://evolution-api.onrender.com`
 - **Swagger Docs**: `https://whatsapp-integration.onrender.com/api-docs`
 
-### 6. Configurar Webhook
+### 6. Webhook (Automático)
 
-```bash
-curl -X POST https://whatsapp-integration.onrender.com/api/webhook/setup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "webhookUrl": "https://whatsapp-integration.onrender.com/webhook",
-    "instanceName": "default"
-  }'
-```
+O webhook é configurado **automaticamente** - não é necessário fazer nada!
+
+Ele será configurado quando:
+- O servidor iniciar (se a instância existir)
+- Você criar uma instância
+- Você gerar um QR code
+
+Para verificar: `GET /api/webhook?instanceName=default`
 
 ### 7. Criar Instância WhatsApp
 
