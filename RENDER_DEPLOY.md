@@ -110,6 +110,11 @@ No serviço `whatsapp-integration`, adicione:
    OPENAI_API_KEY=<sua_chave_openai>  # Opcional - para transcrição de áudio
    LOGGING_ENDPOINT_URL=<url_do_endpoint_de_logging>
    
+   # Webhook URL (para auto-configuração)
+   # O Render fornece RENDER_EXTERNAL_URL automaticamente, mas você pode sobrescrever:
+   WEBHOOK_SERVER_URL=https://whatsapp-integration.onrender.com
+   # OU use WHATSAPP_INTEGRATION_URL (mesmo valor)
+   
    # Evolution API Logs (reduzir verbosidade)
    LOG_LEVEL=ERROR,WARN  # Apenas erros e avisos (padrão: todos os níveis)
    LOG_BAILEYS=error  # Logs do Baileys apenas para erros

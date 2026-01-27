@@ -49,8 +49,22 @@ function initializeOCP() {
 async function autoSetupWebhook() {
   const timestamp = new Date().toISOString();
   
+  // Get webhook URL for logging
+  const webhookUrl = process.env.WEBHOOK_SERVER_URL || 
+                    process.env.WHATSAPP_INTEGRATION_URL ||
+                    process.env.RENDER_EXTERNAL_URL ||
+                    `http://localhost:${config.port}`;
+  
   console.log(`[${timestamp}] 🔧 Auto-configurando webhook...`);
   console.log(`[${timestamp}]    Instance: ${config.instanceName}`);
+  console.log(`[${timestamp}]    Webhook URL: ${webhookUrl}/webhook`);
+  
+  // Warn if using localhost in production
+  if (process.env.NODE_ENV === 'production' && webhookUrl.includes('localhost')) {
+    console.warn(`[${timestamp}] ⚠️  ATENÇÃO: Usando localhost em produção!`);
+    console.warn(`[${timestamp}]    Configure WEBHOOK_SERVER_URL ou WHATSAPP_INTEGRATION_URL no Render`);
+    console.warn(`[${timestamp}]    Ou use RENDER_EXTERNAL_URL (disponível automaticamente no Render)`);
+  }
   
   try {
     await webhookConfigService.autoSetupWebhook(config.instanceName);

@@ -18,8 +18,12 @@ export class WebhookConfigService {
    */
   private getWebhookUrl(req?: any): string {
     // Try environment variable first (for Render/production)
-    const envWebhookUrl = process.env.WEBHOOK_SERVER_URL || process.env.WHATSAPP_INTEGRATION_URL;
-    if (envWebhookUrl && !envWebhookUrl.includes('localhost')) {
+    // Render provides RENDER_EXTERNAL_URL for web services
+    const envWebhookUrl = process.env.WEBHOOK_SERVER_URL || 
+                         process.env.WHATSAPP_INTEGRATION_URL ||
+                         process.env.RENDER_EXTERNAL_URL;
+    
+    if (envWebhookUrl && !envWebhookUrl.includes('localhost') && !envWebhookUrl.includes('127.0.0.1')) {
       return `${envWebhookUrl.replace(/\/$/, '')}/webhook`;
     }
     
@@ -32,7 +36,16 @@ export class WebhookConfigService {
       }
     }
     
-    // Fallback to localhost (for development)
+    // Check if we're in production (Render sets NODE_ENV=production)
+    // If in production but no URL found, log warning
+    if (process.env.NODE_ENV === 'production') {
+      const timestamp = new Date().toISOString();
+      console.warn(`[${timestamp}] ⚠️  Não foi possível detectar a URL do webhook em produção!`);
+      console.warn(`[${timestamp}]    Configure WEBHOOK_SERVER_URL ou WHATSAPP_INTEGRATION_URL no Render`);
+      console.warn(`[${timestamp}]    Usando localhost como fallback (pode não funcionar)`);
+    }
+    
+    // Fallback to localhost (for development only)
     return `http://localhost:${config.port}/webhook`;
   }
 
