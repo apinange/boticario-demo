@@ -1,6 +1,32 @@
 import { Request, Response } from 'express';
 import { instanceService } from '../services/instance.service';
 
+/**
+ * @swagger
+ * /api/instances:
+ *   get:
+ *     summary: Get all WhatsApp instances
+ *     description: Returns a list of all WhatsApp instances configured in Evolution API
+ *     tags: [Instance]
+ *     responses:
+ *       200:
+ *         description: List of instances
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 instances:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Instance'
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Server error
+ */
 export const getInstances = async (req: Request, res: Response) => {
   try {
     const instances = await instanceService.fetchInstances();
@@ -10,6 +36,30 @@ export const getInstances = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/instances:
+ *   post:
+ *     summary: Create a new WhatsApp instance
+ *     description: Creates a new WhatsApp instance in Evolution API
+ *     tags: [Instance]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               instanceName:
+ *                 type: string
+ *                 description: Name of the instance (optional, uses default if not provided)
+ *     responses:
+ *       200:
+ *         description: Instance created successfully
+ *       409:
+ *         description: Instance already exists
+ *       500:
+ *         description: Server error
+ */
 export const createInstance = async (req: Request, res: Response) => {
   try {
     const { instanceName } = req.body;
@@ -24,6 +74,31 @@ export const createInstance = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/instances/qr:
+ *   get:
+ *     summary: Get QR code for instance
+ *     description: Generates and returns a QR code for connecting WhatsApp to the instance
+ *     tags: [Instance]
+ *     parameters:
+ *       - in: query
+ *         name: instanceName
+ *         schema:
+ *           type: string
+ *         description: Name of the instance (optional, uses default if not provided)
+ *     responses:
+ *       200:
+ *         description: QR code data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QrCode'
+ *       404:
+ *         description: QR code not available yet
+ *       500:
+ *         description: Server error
+ */
 export const getQrCode = async (req: Request, res: Response) => {
   try {
     const { instanceName } = req.query;
