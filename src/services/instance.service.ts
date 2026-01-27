@@ -79,6 +79,29 @@ export class InstanceService {
           });
           throw new Error(`Bad request: ${errorMessage}`);
         }
+        if (error.response?.status === 403) {
+          const errorData = error.response.data;
+          let errorMessage: string;
+          if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (errorData?.response?.message) {
+            errorMessage = Array.isArray(errorData.response.message) 
+              ? errorData.response.message.join(', ') 
+              : String(errorData.response.message);
+          } else if (errorData?.message) {
+            errorMessage = Array.isArray(errorData.message) 
+              ? errorData.message.join(', ') 
+              : String(errorData.message);
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+          console.error(`[${new Date().toISOString()}] ❌ Error creating instance (403 Forbidden):`, {
+            status: error.response.status,
+            data: error.response.data,
+            message: errorMessage
+          });
+          throw new Error(`Forbidden: ${errorMessage}. Check API key and instance permissions.`);
+        }
         if (error.code === 'ECONNREFUSED') {
           throw new Error(`Cannot connect to Evolution API at ${this.baseUrl}`);
         }
@@ -277,20 +300,30 @@ export class InstanceService {
     try {
       const instances = await this.fetchInstances();
       
-      // Delete all instances
-      const deletePromises = instances.map(async (inst: any) => {
+      if (instances.length === 0) {
+        console.log(`[${new Date().toISOString()}] ℹ️  No instances to delete`);
+        return;
+      }
+      
+      console.log(`[${new Date().toISOString()}] 🗑️  Found ${instances.length} instance(s) to delete`);
+      
+      // Delete all instances sequentially to avoid conflicts
+      for (const inst of instances) {
         const instanceName = inst.instance?.instanceName || inst.instanceName;
         if (instanceName) {
           try {
             await this.deleteInstance(instanceName);
             console.log(`[${new Date().toISOString()}] ✅ Deleted instance: ${instanceName}`);
+            // Wait a bit between deletions
+            await new Promise(resolve => setTimeout(resolve, 500));
           } catch (error: any) {
             console.warn(`[${new Date().toISOString()}] ⚠️  Failed to delete instance ${instanceName}:`, error.message);
           }
         }
-      });
+      }
       
-      await Promise.all(deletePromises);
+      // Wait a bit more for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error: any) {
       console.error(`[${new Date().toISOString()}] ❌ Error deleting all instances:`, error.message);
       throw error;
