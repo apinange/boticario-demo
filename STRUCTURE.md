@@ -27,11 +27,7 @@ src/
 │   └── start-conversation.ts  # Iniciar conversa manualmente
 │
 └── utils/                 # Utilitários e ferramentas
-    ├── bot-message-tracker.ts # Rastreamento de mensagens do bot
-    ├── expose-tunnel.ts   # Expor servidor via túnel público
-    ├── get-tunnel-url.ts  # Obter URL do túnel
-    ├── stop-tunnel.ts     # Parar túnel
-    └── test-tunnel.ts     # Testar conectividade do túnel
+    └── bot-message-tracker.ts # Rastreamento de mensagens do bot
 ```
 
 ## Descrição das Pastas
@@ -57,8 +53,6 @@ Funcionalidades específicas do sistema:
 ### `utils/`
 Utilitários e ferramentas auxiliares:
 - Rastreamento de mensagens do bot
-- Túnel público para expor servidor local
-- Testes de conectividade
 
 ## Scripts NPM
 
@@ -78,10 +72,5 @@ npm run send                # Enviar mensagem de teste
 npm run bot-mode            # Configurar modo bot
 npm run agent-mode          # Configurar modo agente
 npm run start-conversation  # Iniciar conversa manualmente
-
-# Utils
-npm run expose              # Expor servidor via túnel
-npm run stop-tunnel         # Parar túnel
-npm run test-tunnel         # Testar túnel
 ```
 

@@ -28,18 +28,16 @@ const DEFAULT_PHONE_NUMBER = process.env.DEFAULT_PHONE_NUMBER || '13688852974';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
-// CORS configuration - allow requests from frontend (including tunnel URLs)
+// CORS configuration - allow requests from frontend
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
-    // Allow localhost and localtunnel domains
+    // Allow localhost
     const allowedOrigins = [
       /^http:\/\/localhost(:\d+)?$/,
       /^https:\/\/localhost(:\d+)?$/,
-      /^https?:\/\/.*\.loca\.lt$/,
-      /^https?:\/\/.*\.localtunnel\.me$/,
     ];
     
     // Check if origin matches any allowed pattern
@@ -940,8 +938,7 @@ app.listen(PORT, () => {
   
   console.log(`\n[${timestamp}] 📋 Ready to receive webhooks from Evolution API`);
   console.log(`[${timestamp}] 📋 Ready to connect to OCP WebSocket`);
-  console.log(`[${timestamp}] 📋 Agent endpoint: http://localhost:${PORT}/agent/message`);
-  console.log(`\n[${timestamp}] 💡 Para expor publicamente, execute em outro terminal: npm run expose\n`);
+  console.log(`[${timestamp}] 📋 Agent endpoint: http://localhost:${PORT}/agent/message\n`);
   
   // Initialize OCP client (will try to connect)
   if (ocpUrl !== 'Not configured' && ocpUrl !== 'wss://your-ocp-endpoint.com') {

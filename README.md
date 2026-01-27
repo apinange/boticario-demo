@@ -10,7 +10,6 @@ Sistema de integração WhatsApp usando Evolution API e OCP (Omilia Chat Platfor
 - **Modo Proativo/Reativo**: Controle em tempo real se o bot inicia conversas ou espera
 - **Escalação para Agente**: Mecanismo para transferir conversas para agentes humanos
 - **Restrição de Número**: Aceita mensagens apenas do número configurado
-- **Tunnel Público**: Exposição pública do servidor para demos
 
 ## 📋 Pré-requisitos
 
@@ -102,12 +101,6 @@ npm run restart-ocp
 
 # Iniciar conversa (modo proativo)
 npm run start-conversation
-
-# Expor tunnel público
-npm run expose
-
-# Parar tunnel
-npm run stop-tunnel
 ```
 
 ## 🌐 Deploy no Render
