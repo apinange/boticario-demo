@@ -121,33 +121,65 @@ export const getQrCodeImage = async (req: Request, res: Response) => {
     try {
       console.log(`[${new Date().toISOString()}] 🗑️  Deleting all existing instances...`);
       await instanceService.deleteAllInstances();
-      console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      // Wait longer for cleanup to complete
-      console.log(`[${new Date().toISOString()}] ⏳ Waiting for cleanup to complete...`);
+      // Verify deletion and wait
+      console.log(`[${new Date().toISOString()}] ⏳ Verifying deletion and waiting for cleanup...`);
       await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Double-check that no instances remain
+      const remainingInstances = await instanceService.fetchInstances();
+      if (remainingInstances.length > 0) {
+        console.warn(`[${new Date().toISOString()}] ⚠️  ${remainingInstances.length} instance(s) still exist, waiting longer...`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     } catch (deleteError: any) {
       console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
       // Still wait a bit even if deletion had errors
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
     
-    // Step 2: Create new instance
-    try {
-      console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}"...`);
-      await instanceService.createInstance(name);
-      console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
-      
-      // Wait for instance to be ready
-      console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (createError: any) {
-      if (createError.message.includes('already exists')) {
-        console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
-        throw createError;
+    // Step 2: Create new instance (with retry logic)
+    let createAttempts = 0;
+    const maxAttempts = 3;
+    let instanceCreated = false;
+    
+    while (!instanceCreated && createAttempts < maxAttempts) {
+      try {
+        createAttempts++;
+        console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}" (attempt ${createAttempts}/${maxAttempts})...`);
+        await instanceService.createInstance(name);
+        console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
+        instanceCreated = true;
+        
+        // Wait for instance to be ready
+        console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (createError: any) {
+        if (createError.message.includes('already exists') || createError.message.includes('already in use')) {
+          console.warn(`[${new Date().toISOString()}] ⚠️  Instance still exists (attempt ${createAttempts}), waiting and retrying...`);
+          if (createAttempts < maxAttempts) {
+            // Try to delete again and wait longer
+            try {
+              await instanceService.deleteInstance(name);
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            } catch (deleteError: any) {
+              // Ignore delete errors, just wait
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          } else {
+            // Last attempt failed, but maybe instance exists and we can use it
+            console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, will try to use it...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            instanceCreated = true; // Continue anyway
+          }
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
+          if (createAttempts >= maxAttempts) {
+            throw createError;
+          }
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
     }
     
@@ -192,33 +224,65 @@ export const getQrCode = async (req: Request, res: Response) => {
     try {
       console.log(`[${new Date().toISOString()}] 🗑️  Deleting all existing instances...`);
       await instanceService.deleteAllInstances();
-      console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      // Wait longer for cleanup to complete
-      console.log(`[${new Date().toISOString()}] ⏳ Waiting for cleanup to complete...`);
+      // Verify deletion and wait
+      console.log(`[${new Date().toISOString()}] ⏳ Verifying deletion and waiting for cleanup...`);
       await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Double-check that no instances remain
+      const remainingInstances = await instanceService.fetchInstances();
+      if (remainingInstances.length > 0) {
+        console.warn(`[${new Date().toISOString()}] ⚠️  ${remainingInstances.length} instance(s) still exist, waiting longer...`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     } catch (deleteError: any) {
       console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
       // Still wait a bit even if deletion had errors
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
     
-    // Step 2: Create new instance
-    try {
-      console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}"...`);
-      await instanceService.createInstance(name);
-      console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
-      
-      // Wait for instance to be ready
-      console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (createError: any) {
-      if (createError.message.includes('already exists')) {
-        console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
-        throw createError;
+    // Step 2: Create new instance (with retry logic)
+    let createAttempts = 0;
+    const maxAttempts = 3;
+    let instanceCreated = false;
+    
+    while (!instanceCreated && createAttempts < maxAttempts) {
+      try {
+        createAttempts++;
+        console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}" (attempt ${createAttempts}/${maxAttempts})...`);
+        await instanceService.createInstance(name);
+        console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
+        instanceCreated = true;
+        
+        // Wait for instance to be ready
+        console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (createError: any) {
+        if (createError.message.includes('already exists') || createError.message.includes('already in use')) {
+          console.warn(`[${new Date().toISOString()}] ⚠️  Instance still exists (attempt ${createAttempts}), waiting and retrying...`);
+          if (createAttempts < maxAttempts) {
+            // Try to delete again and wait longer
+            try {
+              await instanceService.deleteInstance(name);
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            } catch (deleteError: any) {
+              // Ignore delete errors, just wait
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          } else {
+            // Last attempt failed, but maybe instance exists and we can use it
+            console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, will try to use it...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            instanceCreated = true; // Continue anyway
+          }
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
+          if (createAttempts >= maxAttempts) {
+            throw createError;
+          }
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
     }
     

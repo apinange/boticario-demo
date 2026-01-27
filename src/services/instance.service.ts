@@ -312,18 +312,53 @@ export class InstanceService {
         const instanceName = inst.instance?.instanceName || inst.instanceName;
         if (instanceName) {
           try {
+            // First, try to logout the instance
+            try {
+              await this.logoutInstance(instanceName);
+              console.log(`[${new Date().toISOString()}] ✅ Logged out instance: ${instanceName}`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (logoutError: any) {
+              console.warn(`[${new Date().toISOString()}] ⚠️  Failed to logout instance ${instanceName} (continuing):`, logoutError.message);
+            }
+            
+            // Then delete the instance
             await this.deleteInstance(instanceName);
             console.log(`[${new Date().toISOString()}] ✅ Deleted instance: ${instanceName}`);
+            
             // Wait a bit between deletions
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
           } catch (error: any) {
             console.warn(`[${new Date().toISOString()}] ⚠️  Failed to delete instance ${instanceName}:`, error.message);
           }
         }
       }
       
-      // Wait a bit more for cleanup to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer for cleanup to complete
+      console.log(`[${new Date().toISOString()}] ⏳ Waiting for cleanup to complete...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify that instances were actually deleted
+      const remainingInstances = await this.fetchInstances();
+      if (remainingInstances.length > 0) {
+        console.warn(`[${new Date().toISOString()}] ⚠️  Warning: ${remainingInstances.length} instance(s) still exist after deletion attempt`);
+        // Try one more time to delete remaining instances
+        for (const inst of remainingInstances) {
+          const instanceName = inst.instance?.instanceName || inst.instanceName;
+          if (instanceName) {
+            try {
+              await this.deleteInstance(instanceName);
+              console.log(`[${new Date().toISOString()}] ✅ Retry deleted instance: ${instanceName}`);
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (error: any) {
+              console.warn(`[${new Date().toISOString()}] ⚠️  Retry failed for instance ${instanceName}:`, error.message);
+            }
+          }
+        }
+        // Wait again after retry
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log(`[${new Date().toISOString()}] ✅ All instances successfully deleted`);
+      }
     } catch (error: any) {
       console.error(`[${new Date().toISOString()}] ❌ Error deleting all instances:`, error.message);
       throw error;
