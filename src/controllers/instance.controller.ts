@@ -123,10 +123,13 @@ export const getQrCodeImage = async (req: Request, res: Response) => {
       await instanceService.deleteAllInstances();
       console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      // Wait a bit for cleanup
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer for cleanup to complete
+      console.log(`[${new Date().toISOString()}] ⏳ Waiting for cleanup to complete...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (deleteError: any) {
       console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
+      // Still wait a bit even if deletion had errors
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
     // Step 2: Create new instance
@@ -136,11 +139,14 @@ export const getQrCodeImage = async (req: Request, res: Response) => {
       console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
       
       // Wait for instance to be ready
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (createError: any) {
       if (createError.message.includes('already exists')) {
         console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
       } else {
+        console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
         throw createError;
       }
     }
@@ -188,10 +194,13 @@ export const getQrCode = async (req: Request, res: Response) => {
       await instanceService.deleteAllInstances();
       console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      // Wait a bit for cleanup
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer for cleanup to complete
+      console.log(`[${new Date().toISOString()}] ⏳ Waiting for cleanup to complete...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (deleteError: any) {
       console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
+      // Still wait a bit even if deletion had errors
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
     // Step 2: Create new instance
@@ -201,11 +210,14 @@ export const getQrCode = async (req: Request, res: Response) => {
       console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
       
       // Wait for instance to be ready
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log(`[${new Date().toISOString()}] ⏳ Waiting for instance to initialize...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (createError: any) {
       if (createError.message.includes('already exists')) {
         console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
       } else {
+        console.error(`[${new Date().toISOString()}] ❌ Failed to create instance:`, createError.message);
         throw createError;
       }
     }
