@@ -22,6 +22,7 @@ export class EvolutionApiService {
       console.log(`[${timestamp}] 🔍 Verificando instância "${this.instanceName}"...`);
       console.log(`[${timestamp}]    Total de instâncias encontradas: ${instances.length}`);
       
+      let foundInstance: any = null;
       const instanceExists = instances.some(
         (inst: any) => {
           const instanceName = inst.name || 
@@ -30,7 +31,15 @@ export class EvolutionApiService {
                               inst.instance?.name;
           const matches = instanceName === this.instanceName;
           if (matches) {
-            console.log(`[${timestamp}] ✅ Instância encontrada: "${instanceName}" (connectionStatus: ${inst.connectionStatus || 'N/A'})`);
+            foundInstance = inst;
+            const connectionStatus = inst.connectionStatus || 'N/A';
+            console.log(`[${timestamp}] ✅ Instância encontrada: "${instanceName}" (connectionStatus: ${connectionStatus})`);
+            
+            // Warn if instance is not connected
+            if (connectionStatus !== 'open') {
+              console.warn(`[${timestamp}] ⚠️  Instância existe mas não está conectada (status: ${connectionStatus})`);
+              console.warn(`[${timestamp}]    Tente reconectar usando: POST /api/instances/reconnect?instanceName=${this.instanceName}`);
+            }
           }
           return matches;
         }
@@ -39,11 +48,19 @@ export class EvolutionApiService {
       if (!instanceExists) {
         console.log(`[${timestamp}] 📋 Instâncias disponíveis:`, instances.map((inst: any) => {
           const name = inst.name || inst.instanceName || inst.instance?.instanceName || inst.instance?.name || 'N/A';
-          return `"${name}"`;
+          const status = inst.connectionStatus || 'N/A';
+          return `"${name}" (${status})`;
         }).join(', '));
         const errorMsg = `Instance "${this.instanceName}" does not exist. Please create it first using POST /api/instances or GET /api/instances/qr`;
         console.error(`[${timestamp}] ❌ ${errorMsg}`);
         throw new Error(errorMsg);
+      }
+      
+      // Additional check: if instance exists but connectionStatus is not "open", warn but continue
+      // (Evolution API might still accept the message even if status shows differently)
+      if (foundInstance && foundInstance.connectionStatus && foundInstance.connectionStatus !== 'open') {
+        console.warn(`[${timestamp}] ⚠️  Aviso: Instância encontrada mas connectionStatus é "${foundInstance.connectionStatus}" (esperado: "open")`);
+        console.warn(`[${timestamp}]    Tentando enviar mesmo assim...`);
       }
     } catch (checkError: any) {
       // If it's our custom error, throw it
