@@ -45,7 +45,7 @@ services:
     env: node
     plan: free
     rootDir: evolution-api
-    buildCommand: npm cache clean --force && npm ci --ignore-scripts && npm run build && npm run db:deploy
+    buildCommand: npm cache clean --force && npm ci --ignore-scripts && npm run db:generate && npm run build && npm run db:deploy
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
