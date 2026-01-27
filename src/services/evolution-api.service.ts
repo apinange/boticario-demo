@@ -15,65 +15,10 @@ export class EvolutionApiService {
 
   async sendTextMessage(phoneNumber: string, text: string): Promise<string | null> {
     const timestamp = new Date().toISOString();
+    const formattedNumber = phoneNumber.replace(/[+\s-]/g, '');
     
-    // Verify instance exists before sending
+    // Try to send message directly - Evolution API will check if instance is in memory
     try {
-      const instances = await instanceService.fetchInstances();
-      console.log(`[${timestamp}] 🔍 Verificando instância "${this.instanceName}"...`);
-      console.log(`[${timestamp}]    Total de instâncias encontradas: ${instances.length}`);
-      
-      let foundInstance: any = null;
-      const instanceExists = instances.some(
-        (inst: any) => {
-          const instanceName = inst.name || 
-                              inst.instanceName || 
-                              inst.instance?.instanceName || 
-                              inst.instance?.name;
-          const matches = instanceName === this.instanceName;
-          if (matches) {
-            foundInstance = inst;
-            const connectionStatus = inst.connectionStatus || 'N/A';
-            console.log(`[${timestamp}] ✅ Instância encontrada: "${instanceName}" (connectionStatus: ${connectionStatus})`);
-            
-            // Warn if instance is not connected
-            if (connectionStatus !== 'open') {
-              console.warn(`[${timestamp}] ⚠️  Instância existe mas não está conectada (status: ${connectionStatus})`);
-              console.warn(`[${timestamp}]    Tente reconectar usando: POST /api/instances/reconnect?instanceName=${this.instanceName}`);
-            }
-          }
-          return matches;
-        }
-      );
-      
-      if (!instanceExists) {
-        console.log(`[${timestamp}] 📋 Instâncias disponíveis:`, instances.map((inst: any) => {
-          const name = inst.name || inst.instanceName || inst.instance?.instanceName || inst.instance?.name || 'N/A';
-          const status = inst.connectionStatus || 'N/A';
-          return `"${name}" (${status})`;
-        }).join(', '));
-        const errorMsg = `Instance "${this.instanceName}" does not exist. Please create it first using POST /api/instances or GET /api/instances/qr`;
-        console.error(`[${timestamp}] ❌ ${errorMsg}`);
-        throw new Error(errorMsg);
-      }
-      
-      // Additional check: if instance exists but connectionStatus is not "open", warn but continue
-      // (Evolution API might still accept the message even if status shows differently)
-      if (foundInstance && foundInstance.connectionStatus && foundInstance.connectionStatus !== 'open') {
-        console.warn(`[${timestamp}] ⚠️  Aviso: Instância encontrada mas connectionStatus é "${foundInstance.connectionStatus}" (esperado: "open")`);
-        console.warn(`[${timestamp}]    Tentando enviar mesmo assim...`);
-      }
-    } catch (checkError: any) {
-      // If it's our custom error, throw it
-      if (checkError.message.includes('does not exist')) {
-        throw checkError;
-      }
-      // Otherwise, log warning but continue (check might fail for other reasons)
-      console.warn(`[${timestamp}] ⚠️  Não foi possível verificar a instância (continuando mesmo assim):`, checkError.message);
-    }
-    
-    try {
-      const formattedNumber = phoneNumber.replace(/[+\s-]/g, '');
-      
       const response = await axios.post(
         `${this.baseUrl}/message/sendText/${this.instanceName}`,
         {
@@ -99,6 +44,80 @@ export class EvolutionApiService {
       return null;
     } catch (error: any) {
       const errorTimestamp = new Date().toISOString();
+      
+      // If 404, instance exists in DB but not loaded in Evolution API memory
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        const errorData = error.response.data;
+        let errorMessage = 'Instance not found';
+        
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData?.response?.message) {
+          const msg = errorData.response.message;
+          errorMessage = Array.isArray(msg) 
+            ? msg.map((m: any) => typeof m === 'string' ? m : JSON.stringify(m)).join(', ')
+            : String(msg);
+        } else if (errorData?.message) {
+          errorMessage = Array.isArray(errorData.message) 
+            ? errorData.message.join(', ') 
+            : String(errorData.message);
+        }
+        
+        console.error(`[${errorTimestamp}] ❌ Instância não encontrada na memória da Evolution API`);
+        console.error(`[${errorTimestamp}]    A instância existe no banco mas não está carregada na memória`);
+        console.error(`[${errorTimestamp}]    Tentando conectar a instância para carregá-la na memória...`);
+        
+        // Try to connect instance to load it into memory
+        try {
+          await axios.get(
+            `${this.baseUrl}/instance/connect/${this.instanceName}`,
+            {
+              headers: {
+                apikey: this.apiKey
+              },
+              timeout: 10000
+            }
+          );
+          
+          console.log(`[${errorTimestamp}] ✅ Comando de conexão enviado, aguardando 2 segundos...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Retry sending the message
+          console.log(`[${errorTimestamp}] 🔄 Tentando enviar mensagem novamente...`);
+          const retryResponse = await axios.post(
+            `${this.baseUrl}/message/sendText/${this.instanceName}`,
+            {
+              number: formattedNumber,
+              text: text
+            },
+            {
+              headers: {
+                apikey: this.apiKey,
+                'Content-Type': 'application/json'
+              },
+              timeout: 30000
+            }
+          );
+          
+          if (retryResponse.status === 200 || retryResponse.status === 201) {
+            const messageId = retryResponse.data?.key?.id || null;
+            console.log(`[${errorTimestamp}] ✅ Mensagem enviada com sucesso após reconexão!`);
+            console.log(`[${errorTimestamp}]    Message ID: ${messageId}`);
+            return messageId;
+          }
+        } catch (connectError: any) {
+          console.error(`[${errorTimestamp}] ❌ Falha ao conectar instância:`, connectError.message);
+        }
+        
+        // If retry failed, throw original error with helpful message
+        console.error(`[${errorTimestamp}] 💡 Dica: A instância precisa estar carregada na memória da Evolution API`);
+        console.error(`[${errorTimestamp}]    Tente: POST /api/instances/reconnect?instanceName=${this.instanceName}`);
+        console.error(`[${errorTimestamp}]    Ou recrie: GET /api/instances/qr?instanceName=${this.instanceName}`);
+        
+        throw new Error(`Instance "${this.instanceName}" is not loaded in Evolution API memory. Error: ${errorMessage}`);
+      }
+      
+      // Handle other errors
       console.error(`[${errorTimestamp}] ❌ Erro ao enviar mensagem:`, error.message);
       
       if (axios.isAxiosError(error) && error.response) {
@@ -109,11 +128,9 @@ export class EvolutionApiService {
           errorMessage = errorData;
         } else if (errorData?.response?.message) {
           const msg = errorData.response.message;
-          if (Array.isArray(msg)) {
-            errorMessage = msg.map((m: any) => typeof m === 'string' ? m : JSON.stringify(m)).join(', ');
-          } else {
-            errorMessage = String(msg);
-          }
+          errorMessage = Array.isArray(msg) 
+            ? msg.map((m: any) => typeof m === 'string' ? m : JSON.stringify(m)).join(', ')
+            : String(msg);
         } else if (errorData?.message) {
           errorMessage = Array.isArray(errorData.message) 
             ? errorData.message.join(', ') 
@@ -123,11 +140,6 @@ export class EvolutionApiService {
         }
         
         console.error(`[${errorTimestamp}]    Error: ${errorMessage}`);
-        
-        // If instance doesn't exist, provide helpful message
-        if (error.response.status === 404 && errorMessage.includes('does not exist')) {
-          console.error(`[${errorTimestamp}] 💡 Dica: Crie a instância usando: GET /api/instances/qr?instanceName=${this.instanceName}`);
-        }
       }
       
       throw error;
