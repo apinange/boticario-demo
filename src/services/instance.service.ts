@@ -33,6 +33,10 @@ export class InstanceService {
         if (response.data?.instances && Array.isArray(response.data.instances)) {
           return response.data.instances;
         }
+        // If response has 'data' property with instances array
+        if (response.data?.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
         return [];
       }
       

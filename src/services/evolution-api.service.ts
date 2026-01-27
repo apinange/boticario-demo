@@ -19,17 +19,28 @@ export class EvolutionApiService {
     // Verify instance exists before sending
     try {
       const instances = await instanceService.fetchInstances();
+      console.log(`[${timestamp}] 🔍 Verificando instância "${this.instanceName}"...`);
+      console.log(`[${timestamp}]    Total de instâncias encontradas: ${instances.length}`);
+      
       const instanceExists = instances.some(
         (inst: any) => {
           const instanceName = inst.name || 
                               inst.instanceName || 
                               inst.instance?.instanceName || 
                               inst.instance?.name;
-          return instanceName === this.instanceName;
+          const matches = instanceName === this.instanceName;
+          if (matches) {
+            console.log(`[${timestamp}] ✅ Instância encontrada: "${instanceName}" (connectionStatus: ${inst.connectionStatus || 'N/A'})`);
+          }
+          return matches;
         }
       );
       
       if (!instanceExists) {
+        console.log(`[${timestamp}] 📋 Instâncias disponíveis:`, instances.map((inst: any) => {
+          const name = inst.name || inst.instanceName || inst.instance?.instanceName || inst.instance?.name || 'N/A';
+          return `"${name}"`;
+        }).join(', '));
         const errorMsg = `Instance "${this.instanceName}" does not exist. Please create it first using POST /api/instances or GET /api/instances/qr`;
         console.error(`[${timestamp}] ❌ ${errorMsg}`);
         throw new Error(errorMsg);
