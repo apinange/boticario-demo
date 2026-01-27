@@ -139,20 +139,18 @@
 					"name": "Logout Instance",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"instanceName\": \"default\"\n}"
-						},
+						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/instances/logout",
+							"raw": "{{base_url}}/api/instances/logout?instanceName=default",
 							"host": ["{{base_url}}"],
-							"path": ["api", "instances", "logout"]
+							"path": ["api", "instances", "logout"],
+							"query": [
+								{
+									"key": "instanceName",
+									"value": "default",
+									"description": "Name of the instance to logout"
+								}
+							]
 						}
 					}
 				}

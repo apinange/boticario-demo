@@ -239,10 +239,12 @@ export const reconnectInstance = async (req: Request, res: Response) => {
 
 export const logoutInstance = async (req: Request, res: Response) => {
   try {
-    const { instanceName } = req.body;
+    // Accept instanceName from query parameter or body
+    const instanceName = (req.query.instanceName as string) || req.body?.instanceName || undefined;
     await instanceService.logoutInstance(instanceName);
-    res.json({ success: true, message: 'Instance logged out successfully' });
+    res.json({ success: true, message: `Instance "${instanceName || 'default'}" logged out successfully` });
   } catch (error: any) {
+    console.error(`[${new Date().toISOString()}] ❌ Error logging out instance:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
