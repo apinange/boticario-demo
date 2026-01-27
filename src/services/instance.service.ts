@@ -229,6 +229,74 @@ export class InstanceService {
     }
   }
 
+  async deleteInstance(instanceName: string): Promise<void> {
+    try {
+      await axios.delete(
+        `${this.baseUrl}/instance/delete/${instanceName}`,
+        {
+          headers: {
+            apikey: this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            instanceName: instanceName
+          },
+          timeout: 10000
+        }
+      );
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          // Instance not found is OK, just return
+          return;
+        }
+        if (error.response?.status === 400) {
+          const errorData = error.response.data;
+          let errorMessage: string;
+          if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (errorData?.response?.message) {
+            errorMessage = Array.isArray(errorData.response.message) 
+              ? errorData.response.message.join(', ') 
+              : String(errorData.response.message);
+          } else if (errorData?.message) {
+            errorMessage = Array.isArray(errorData.message) 
+              ? errorData.message.join(', ') 
+              : String(errorData.message);
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+          throw new Error(`Evolution API returned 400: ${errorMessage}`);
+        }
+      }
+      throw error;
+    }
+  }
+
+  async deleteAllInstances(): Promise<void> {
+    try {
+      const instances = await this.fetchInstances();
+      
+      // Delete all instances
+      const deletePromises = instances.map(async (inst: any) => {
+        const instanceName = inst.instance?.instanceName || inst.instanceName;
+        if (instanceName) {
+          try {
+            await this.deleteInstance(instanceName);
+            console.log(`[${new Date().toISOString()}] ✅ Deleted instance: ${instanceName}`);
+          } catch (error: any) {
+            console.warn(`[${new Date().toISOString()}] ⚠️  Failed to delete instance ${instanceName}:`, error.message);
+          }
+        }
+      });
+      
+      await Promise.all(deletePromises);
+    } catch (error: any) {
+      console.error(`[${new Date().toISOString()}] ❌ Error deleting all instances:`, error.message);
+      throw error;
+    }
+  }
+
   async logoutInstance(instanceName?: string): Promise<void> {
     const name = instanceName || this.instanceName;
     

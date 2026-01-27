@@ -113,29 +113,40 @@ export const createInstance = async (req: Request, res: Response) => {
 export const getQrCodeImage = async (req: Request, res: Response) => {
   try {
     const { instanceName } = req.query;
-    const name = (instanceName as string) || undefined;
+    const name = (instanceName as string) || 'default';
     
-    // First, check if instance exists, if not, create it
+    console.log(`[${new Date().toISOString()}] 🔄 Starting fresh QR code generation...`);
+    
+    // Step 1: Delete all existing instances
     try {
-      const instances = await instanceService.fetchInstances();
-      const instanceExists = instances.some((inst: any) => 
-        inst.instance?.instanceName === name || 
-        inst.instanceName === name ||
-        (!name && (inst.instance?.instanceName === 'default' || inst.instanceName === 'default'))
-      );
+      console.log(`[${new Date().toISOString()}] 🗑️  Deleting all existing instances...`);
+      await instanceService.deleteAllInstances();
+      console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      if (!instanceExists) {
-        console.log(`[${new Date().toISOString()}] ℹ️  Instance "${name || 'default'}" not found, creating it...`);
-        await instanceService.createInstance(name);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      // Wait a bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (deleteError: any) {
+      console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
+    }
+    
+    // Step 2: Create new instance
+    try {
+      console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}"...`);
+      await instanceService.createInstance(name);
+      console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
+      
+      // Wait for instance to be ready
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (createError: any) {
-      if (!createError.message.includes('already exists')) {
-        console.error(`[${new Date().toISOString()}] ⚠️  Error checking/creating instance:`, createError.message);
+      if (createError.message.includes('already exists')) {
+        console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
+      } else {
+        throw createError;
       }
     }
     
-    // Get QR code
+    // Step 3: Get QR code
+    console.log(`[${new Date().toISOString()}] 📱 Getting QR code for instance "${name}"...`);
     const qrData = await instanceService.getQrCode(name);
     
     if (qrData) {
@@ -143,6 +154,8 @@ export const getQrCodeImage = async (req: Request, res: Response) => {
         // Use qrCode (raw base64) or extract from base64 data URL
         const base64Data = qrData.qrCode || qrData.base64.replace(/^data:image\/png;base64,/, '');
         const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        console.log(`[${new Date().toISOString()}] ✅ QR code generated successfully`);
         
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
@@ -164,32 +177,41 @@ export const getQrCodeImage = async (req: Request, res: Response) => {
 export const getQrCode = async (req: Request, res: Response) => {
   try {
     const { instanceName, format } = req.query;
-    const name = (instanceName as string) || undefined;
+    const name = (instanceName as string) || 'default';
     const returnImage = format === 'image' || format === 'png';
     
-    // First, check if instance exists, if not, create it
+    console.log(`[${new Date().toISOString()}] 🔄 Starting fresh QR code generation...`);
+    
+    // Step 1: Delete all existing instances
     try {
-      const instances = await instanceService.fetchInstances();
-      const instanceExists = instances.some((inst: any) => 
-        inst.instance?.instanceName === name || 
-        inst.instanceName === name ||
-        (!name && (inst.instance?.instanceName === 'default' || inst.instanceName === 'default'))
-      );
+      console.log(`[${new Date().toISOString()}] 🗑️  Deleting all existing instances...`);
+      await instanceService.deleteAllInstances();
+      console.log(`[${new Date().toISOString()}] ✅ All instances deleted`);
       
-      if (!instanceExists) {
-        console.log(`[${new Date().toISOString()}] ℹ️  Instance "${name || 'default'}" not found, creating it...`);
-        await instanceService.createInstance(name);
-        // Wait a bit for instance to be ready
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      // Wait a bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (deleteError: any) {
+      console.warn(`[${new Date().toISOString()}] ⚠️  Error deleting instances (continuing anyway):`, deleteError.message);
+    }
+    
+    // Step 2: Create new instance
+    try {
+      console.log(`[${new Date().toISOString()}] ➕ Creating new instance "${name}"...`);
+      await instanceService.createInstance(name);
+      console.log(`[${new Date().toISOString()}] ✅ Instance "${name}" created`);
+      
+      // Wait for instance to be ready
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (createError: any) {
-      // If instance already exists, that's fine, continue
-      if (!createError.message.includes('already exists')) {
-        console.error(`[${new Date().toISOString()}] ⚠️  Error checking/creating instance:`, createError.message);
+      if (createError.message.includes('already exists')) {
+        console.log(`[${new Date().toISOString()}] ℹ️  Instance already exists, continuing...`);
+      } else {
+        throw createError;
       }
     }
     
-    // Now get QR code
+    // Step 3: Get QR code
+    console.log(`[${new Date().toISOString()}] 📱 Getting QR code for instance "${name}"...`);
     const qrData = await instanceService.getQrCode(name);
     
     if (qrData) {
@@ -199,6 +221,8 @@ export const getQrCode = async (req: Request, res: Response) => {
           // Use qrCode (raw base64) or extract from base64 data URL
           const base64Data = qrData.qrCode || qrData.base64.replace(/^data:image\/png;base64,/, '');
           const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+          console.log(`[${new Date().toISOString()}] ✅ QR code generated successfully`);
           
           res.setHeader('Content-Type', 'image/png');
           res.setHeader('Content-Disposition', 'inline; filename="qr-code.png"');
@@ -211,6 +235,7 @@ export const getQrCode = async (req: Request, res: Response) => {
         }
       } else {
         // Return JSON
+        console.log(`[${new Date().toISOString()}] ✅ QR code generated successfully`);
         res.json({ success: true, qrCode: qrData.qrCode, base64: qrData.base64 });
       }
     } else {
