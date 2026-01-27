@@ -62,7 +62,7 @@ services:
       # SERVER_URL será a URL do próprio serviço (ex: https://evolution-api.onrender.com)
 
   # PostgreSQL Database
-  - type: pg
+  - type: postgres
     name: whatsapp-postgres
     plan: free
     databaseName: evolution
