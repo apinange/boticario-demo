@@ -78,9 +78,9 @@ export const sendAgentMessage = async (req: Request, res: Response) => {
         console.log(`[${timestamp}] ✅ Mensagem do agente enviada para WhatsApp`);
         console.log(`[${timestamp}]    Message ID: ${messageId}`);
 
-        // Log BOT message (agent message)
+        // Log ESCALATION message (agent messages after escalation)
         const logger = getMessageLogger();
-        await logger.logBotMessage({
+        await logger.logEscalationMessage({
           phoneNumber: phoneNumber,
           text: text,
           messageId: messageId
