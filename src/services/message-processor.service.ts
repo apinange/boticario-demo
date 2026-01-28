@@ -376,9 +376,9 @@ export class MessageProcessorService {
         console.log(`[${timestamp}] ✅ Mensagem de escalação enviada para WhatsApp`);
         console.log(`[${timestamp}]    Message ID: ${messageId}`);
         
-        // Log BOT message (escalation message)
+        // Log ESCALATION message (indicates user was escalated to agent)
         const logger = getMessageLogger();
-        await logger.logBotMessage({
+        await logger.logEscalationMessage({
           phoneNumber: phoneNumber,
           text: escalationMessage,
           messageId: messageId

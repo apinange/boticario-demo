@@ -902,15 +902,15 @@ class OCPWebSocketClient {
         console.log(`[${timestamp}] 🔄 Tentando arquivo local...`);
         
         // Fallback to local file
-        const imagePath = path.join(process.cwd(), 'imgs', 'catalog.png');
+      const imagePath = path.join(process.cwd(), 'imgs', 'catalog.png');
         if (fs.existsSync(imagePath)) {
           console.log(`[${timestamp}] 📖 Lendo catálogo do arquivo local: ${imagePath}`);
           const imageBuffer = fs.readFileSync(imagePath);
           imageBase64 = imageBuffer.toString('base64');
         } else {
-          console.error(`[${timestamp}] ❌ Imagem não encontrada: ${imagePath}`);
-          return;
-        }
+        console.error(`[${timestamp}] ❌ Imagem não encontrada: ${imagePath}`);
+        return;
+      }
       }
       
       if (!imageBase64) {
@@ -995,35 +995,35 @@ class OCPWebSocketClient {
       try {
         // Use evolutionApiService which includes instance verification
         const messageId = await evolutionApiService.sendTextMessage(formattedNumber, text);
-        
+
         if (messageId) {
-          const successTimestamp = new Date().toISOString();
-          console.log(`[${successTimestamp}] ✅ OCP → WhatsApp: Message sent successfully`);
-          console.log(`[${successTimestamp}]    Phone: ${formattedNumber}`);
-          console.log(`[${successTimestamp}]    Message ID: ${messageId}`);
-          
-          // Log BOT message
-          const logger = getMessageLogger();
-          await logger.logBotMessage({
-            phoneNumber: phoneNumber,
-            text: text,
+            const successTimestamp = new Date().toISOString();
+            console.log(`[${successTimestamp}] ✅ OCP → WhatsApp: Message sent successfully`);
+            console.log(`[${successTimestamp}]    Phone: ${formattedNumber}`);
+            console.log(`[${successTimestamp}]    Message ID: ${messageId}`);
+            
+            // Log BOT message
+            const logger = getMessageLogger();
+            await logger.logBotMessage({
+              phoneNumber: phoneNumber,
+              text: text,
             messageId: messageId
-          });
-        }
-      } catch (error: any) {
-        const errorTimestamp = new Date().toISOString();
+            });
+          }
+        } catch (error: any) {
+          const errorTimestamp = new Date().toISOString();
         console.error(`[${errorTimestamp}] ❌ Erro ao enviar para WhatsApp:`, error.message);
-        
-        // If it's a 400 error, likely invalid phone number - clean up session mapping
+                
+                // If it's a 400 error, likely invalid phone number - clean up session mapping
         if (axios.isAxiosError(error) && error.response?.status === 400) {
-          this.cleanupInvalidMappings(formattedNumber);
-        }
-        
+                  this.cleanupInvalidMappings(formattedNumber);
+                }
+                
         // If it's a 404 error (instance not found), log helpful message
         if (axios.isAxiosError(error) && error.response?.status === 404) {
           console.error(`[${errorTimestamp}] 💡 Dica: Verifique se a instância existe e está conectada usando: GET /api/instances`);
-        }
-        
+      }
+      
         // Re-throw to let caller handle it
         throw error;
       }

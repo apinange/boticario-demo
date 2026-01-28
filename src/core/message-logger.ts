@@ -13,7 +13,7 @@ const EVOLUTION_API_KEY = process.env.AUTHENTICATION_API_KEY || '429683C4C977415
 const INSTANCE_NAME = process.env.INSTANCE_NAME || 'default';
 
 interface LogMessage {
-  flag: 'USER' | 'BOT';
+  flag: 'USER' | 'BOT' | 'ESCALATION';
   timestamp: string;
   message_id: string;
   conversation_id: string;
@@ -175,7 +175,7 @@ class MessageLogger {
    * Log a message to the external endpoint
    */
   public async logMessage(params: {
-    flag: 'USER' | 'BOT';
+    flag: 'USER' | 'BOT' | 'ESCALATION';
     phoneNumber: string;
     text: string;
     message?: any; // WhatsApp message object (for extracting media)
@@ -249,6 +249,68 @@ class MessageLogger {
 
     const logMessage: LogMessage = {
       flag: 'BOT',
+      timestamp,
+      message_id: messageId,
+      conversation_id: conversationId,
+      user_id: params.phoneNumber,
+      text: params.text || '',
+      images: [],
+      audios: [],
+      imageMimetypes: [],
+      audioMimetypes: [],
+      imageFilenames: [],
+      audioFilenames: []
+    };
+
+    // Add image if provided
+    if (params.imagePath && fs.existsSync(params.imagePath)) {
+      try {
+        const imageBuffer = fs.readFileSync(params.imagePath);
+        if (logMessage.images) {
+          logMessage.images.push(imageBuffer);
+        }
+        const ext = path.extname(params.imagePath).toLowerCase();
+        const mimetype = ext === '.png' ? 'image/png' : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : 'image/jpeg';
+        if (logMessage.imageMimetypes) {
+          logMessage.imageMimetypes.push(mimetype);
+        }
+        if (logMessage.imageFilenames) {
+          logMessage.imageFilenames.push(path.basename(params.imagePath));
+        }
+        console.log(`[${timestamp}] 📷 Imagem adicionada ao log: ${path.basename(params.imagePath)}`);
+      } catch (error: any) {
+        console.error(`[${timestamp}] ⚠️  Erro ao ler imagem para logging:`, error.message);
+      }
+    }
+
+    // Send immediately (non-blocking)
+    this.sendLogMessage(logMessage).catch(error => {
+      const errorTimestamp = new Date().toISOString();
+      console.error(`[${errorTimestamp}] ❌ Erro ao enviar log (será reenviado):`, error.message);
+      // Queue for retry
+      this.queueLogMessage(logMessage);
+    });
+  }
+
+  /**
+   * Log an ESCALATION message (when user is escalated to agent)
+   */
+  public async logEscalationMessage(params: {
+    phoneNumber: string;
+    text: string;
+    imagePath?: string; // Path to local image file
+    messageId?: string;
+  }): Promise<void> {
+    if (!LOGGING_ENDPOINT_URL) {
+      return; // Logging disabled
+    }
+
+    const timestamp = new Date().toISOString();
+    const messageId = params.messageId || crypto.randomUUID();
+    const conversationId = this.getConversationId(params.phoneNumber);
+
+    const logMessage: LogMessage = {
+      flag: 'ESCALATION',
       timestamp,
       message_id: messageId,
       conversation_id: conversationId,
