@@ -25,6 +25,7 @@ interface LogMessage {
   audioMimetypes?: string[];
   imageFilenames?: string[];
   audioFilenames?: string[];
+  imageUrl?: string; // URL for catalog images
 }
 
 interface QueuedLog {
@@ -237,6 +238,7 @@ class MessageLogger {
     phoneNumber: string;
     text: string;
     imagePath?: string; // Path to local image file (e.g., catalog)
+    imageUrl?: string; // URL for catalog images
     messageId?: string;
   }): Promise<void> {
     if (!LOGGING_ENDPOINT_URL) {
@@ -262,8 +264,13 @@ class MessageLogger {
       audioFilenames: []
     };
 
-    // Add image if provided
-    if (params.imagePath && fs.existsSync(params.imagePath)) {
+    // Add image URL if provided (for catalog from URL)
+    if (params.imageUrl) {
+      logMessage.imageUrl = params.imageUrl;
+      console.log(`[${timestamp}] 📷 URL da imagem adicionada ao log: ${params.imageUrl}`);
+    }
+    // Add image from local file if provided
+    else if (params.imagePath && fs.existsSync(params.imagePath)) {
       try {
         const imageBuffer = fs.readFileSync(params.imagePath);
         if (logMessage.images) {
@@ -373,6 +380,11 @@ class MessageLogger {
       }
       formData.append('text', logMessage.text || '');
 
+      // Add image URL if provided (for catalog)
+      if (logMessage.imageUrl) {
+        formData.append('image_url', logMessage.imageUrl);
+      }
+
       // Add images
       const images = logMessage.images || [];
       if (images.length > 0) {
@@ -405,6 +417,7 @@ class MessageLogger {
       console.log(`[${timestamp}]    Message ID: ${logMessage.message_id}`);
       console.log(`[${timestamp}]    Text: "${logMessage.text.substring(0, 50)}${logMessage.text.length > 50 ? '...' : ''}"`);
       console.log(`[${timestamp}]    Images: ${logMessage.images?.length || 0}`);
+      console.log(`[${timestamp}]    Image URL: ${logMessage.imageUrl || 'N/A'}`);
       console.log(`[${timestamp}]    Audios: ${logMessage.audios?.length || 0}`);
 
       const response = await axios.post(LOGGING_ENDPOINT_URL, formData, {

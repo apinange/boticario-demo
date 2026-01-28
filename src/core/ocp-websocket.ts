@@ -942,12 +942,12 @@ class OCPWebSocketClient {
         console.log(`[${timestamp}] ✅ Catálogo enviado com sucesso!`);
         console.log(`[${timestamp}]    Message ID: ${messageId}`);
         
-        // Log BOT message with catalog image
+        // Log BOT message with catalog image URL
         const logger = getMessageLogger();
         await logger.logBotMessage({
           phoneNumber: phoneNumber,
           text: '', // Catalog has no text, only image
-          imagePath: catalogImageUrl, // Store URL instead of local path
+          imageUrl: catalogImageUrl, // Send URL directly to logger
           messageId: messageId
         });
       }
