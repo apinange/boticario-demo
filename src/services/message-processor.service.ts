@@ -176,6 +176,23 @@ export class MessageProcessorService {
       if (transcription) {
         console.log(`[${timestamp}] ✅ Transcrição: "${transcription}"`);
         
+        // Log USER message with audio
+        const logger = getMessageLogger();
+        await logger.logMessage({
+          flag: 'USER',
+          phoneNumber: phoneNumber,
+          text: transcription,
+          message: message,
+          messageId: message.key?.id
+        });
+        
+        // Check if phone number is in agent mode
+        if (isInAgentMode(phoneNumber)) {
+          console.log(`[${timestamp}] 🚨 Modo agente ativo para ${phoneNumber} - transcrição não será enviada para OCP`);
+          console.log(`[${timestamp}]    A transcrição foi apenas logada. O agente pode responder via POST /agent/message`);
+          return;
+        }
+        
         // Send transcription to OCP as if it were a text message
         const ocpClient = getOCPClient();
         const ws = (ocpClient as any).ws;
@@ -185,16 +202,6 @@ export class MessageProcessorService {
           console.error(`[${timestamp}] ⚠️  OCP WebSocket não está conectado!`);
         } else {
           console.log(`[${timestamp}] ✅ OCP WebSocket está conectado, enviando transcrição...`);
-          
-          // Log USER message with audio
-          const logger = getMessageLogger();
-          await logger.logMessage({
-            flag: 'USER',
-            phoneNumber: phoneNumber,
-            text: transcription,
-            message: message,
-            messageId: message.key?.id
-          });
           
           // Create a message-like object with the transcription
           const transcriptionMessage: WhatsAppMessage = {
