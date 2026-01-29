@@ -64,6 +64,25 @@ class MessageLogger {
   }
 
   /**
+   * Reset conversation ID for a specific phone number or all phone numbers
+   * This will force a new conversation_id to be generated on the next message
+   */
+  public resetConversationId(phoneNumber?: string): void {
+    if (phoneNumber) {
+      // Reset for specific phone number
+      this.conversationIds.delete(phoneNumber);
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] 🔄 Conversation ID resetado para ${phoneNumber}`);
+    } else {
+      // Reset all conversation IDs
+      const count = this.conversationIds.size;
+      this.conversationIds.clear();
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] 🔄 Todos os Conversation IDs foram resetados (${count} número(s))`);
+    }
+  }
+
+  /**
    * Download media from Evolution API and return as Buffer
    */
   private async downloadMediaFromEvolutionAPI(message: any, mediaType: 'image' | 'audio' | 'video' | 'document'): Promise<Buffer | null> {

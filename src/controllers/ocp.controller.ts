@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getOCPClient } from '../core/ocp-websocket';
 import { getBotMode, isProactiveMode } from '../features/bot-mode';
+import { getMessageLogger } from '../core/message-logger';
 import { config } from '../config/env.config';
 
 export const restartOCPSession = async (req: Request, res: Response) => {
@@ -13,6 +14,10 @@ export const restartOCPSession = async (req: Request, res: Response) => {
     if (!isConnected) {
       return res.status(400).json({ error: 'OCP WebSocket is not connected' });
     }
+    
+    // Reset all conversation IDs to generate new ones
+    const logger = getMessageLogger();
+    logger.resetConversationId();
     
     ocpClient.restartSession();
     
