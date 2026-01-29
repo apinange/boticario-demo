@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import * as crypto from 'crypto';
 import { getOCPClient } from '../core/ocp-websocket';
 import { getMessageLogger } from '../core/message-logger';
 import { botMessageTracker } from '../utils/bot-message-tracker';
@@ -390,6 +391,14 @@ export class MessageProcessorService {
           text: escalationMessage,
           messageId: messageId
         });
+        
+        // Send empty ESCALATION flag message to activate agent mode in frontend
+        await logger.logEscalationMessage({
+          phoneNumber: phoneNumber,
+          text: '',
+          messageId: crypto.randomUUID()
+        });
+        console.log(`[${timestamp}] ✅ Flag ESCALATION enviada para ativar modo agente no frontend`);
       }
     } catch (error: any) {
       console.error(`[${timestamp}] ❌ Erro ao enviar mensagem de escalação: ${error.message}`);
